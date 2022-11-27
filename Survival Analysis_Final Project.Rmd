@@ -10,6 +10,7 @@ library(dplyr)
 library(survival)
 library(ggplot2)
 library(visR)
+library(hrbrthemes)
 ```
 
 
@@ -73,8 +74,6 @@ dim(lung_cohort)
 #Summary
 summary(lung_cohort)
 
-# check null values
-
 ```
 
 ```{r}
@@ -82,8 +81,12 @@ summary(lung_cohort)
 
 #Age-group()
 #Sex-pie chart
-#
-boxplot(lung_cohort)
+df = 
+  lung_cohort %>%
+  select(Age, Sex)
+ggplot(df, aes(x = Age)) + 
+  geom_histogram()
+hist(lung_cohort$Age)
 hist(lung_cohort$inst)
 hist(lung_cohort$time)
 barplot(lung_cohort$Sex)
