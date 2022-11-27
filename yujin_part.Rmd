@@ -15,13 +15,190 @@ library(ggfortify)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 # Load Data
-
-```{r, message=FALSE}
+```{r, message=FALSE, results='hide'}
 lung
 data(cancer, package="survival")
 
-cancer_df=cancer
-head(cancer_df, 7)
+lung_df=lung %>% 
+  mutate( sex = as.factor(sex),
+          ph.ecog = as.factor(ph.ecog)) %>% 
+  rename(ph_ecog = ph.ecog,
+         ph_karno = ph.karno,
+         pat_karno = pat.karno,
+         meal_cal = meal.cal,
+         wt_loss = wt.loss
+         )
+
 ```
+Dataset Sample:  
+`r knitr::kable(head(lung_df, 7))`  
+
+Dataset Attributes Overview:  
+*inst:	    Institute Code  
+*time:	    Survival time in days  
+*status:	  Censoring status; 1= censored; 2 = dead
+*sex:       Male=1; Female=2
+*age:	      Age of the subject in years  
+*ph_ecog:   Ecog performance score; 0: good, 5: dead  
+*ph_karno:  Karnofsky performance score; 0: bad; 100: good rated by physician  
+*pat_karno: Karnofsky performance score as rated by patient  
+*meal_cal:	Calories consumed at meals  
+*wt_loss:	  Weight loss in last six months 
+
+
+# Overall Nelson-Aalen Estimator 
+Nelson-Aalen hazard estimation focus on estimating the cumulative hazard function H(t)
+```{r}
+nelsonaalen = function(data, timevar, statusvar) {
+  if (!is.data.frame(data)) {
+    stop("Data must be a data frame")
+  }
+  timevar <- as.character(substitute(timevar))
+  statusvar <- as.character(substitute(statusvar))
+  time <- data[, timevar, drop = TRUE]
+  status <- data[, statusvar, drop = TRUE]
+
+  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ 1))
+  idx <- match(time, hazard[, "time"])
+  hazard[idx, "hazard"]
+}
+
+hazard = nelsonaalen(lung_df, time, status)
+# plot(x = lung_df$time, main="Cumulative Probability for Event of Interest (Death)", y = hazard, ylab = "Cumulative Probability of subject's death", xlab = "Number of Days") 
+
+
+lung_df1 = lung_df %>% 
+  mutate(hazard = nelsonaalen(lung_df, time, status))
+
+ggplot(data = lung_df1, aes(x = time, y = hazard)) + 
+  geom_point(alpha = .3) +
+  geom_line(colour = "blue") + 
+  theme(legend.position = "bottom") +
+  labs(
+    title = "Cumulative Probability for Event of Interest (Death)",
+    x = "Number of Days",
+    y = "Cumulative Probability of subject's death"
+  )
+```
+
+## Fleming-Harrington Estimator
+Once the H(t) of Nelson-Aalen hazard estimator is obtained, Fleming-Harrington estimator for survival function can be obtained.
+```{r}
+survfit(Surv(time, status) ~ 1, lung_df, stype = 1, ctype = 2)
+```
+* Fleming-Harrington estimator for median survival is 310, which is larger/equal to K-M estimator?
+
+# Nelson-Aalen Estimator on Variables of Interests
+## Sex group
+Dividing the population into two groups by the sex of the subject to check if the sex of a subject has any affect on the cumulative hazard.
+```{r}
+nelsonaalen = function(data, timevar, statusvar, invar) {
+  if (!is.data.frame(data)) {
+    stop("Data must be a data frame")
+  }
+  timevar <- as.character(substitute(timevar))
+  statusvar <- as.character(substitute(statusvar))
+  invar <- as.character(substitute(invar))
+  time <- data[, timevar, drop = TRUE]
+  status <- data[, statusvar, drop = TRUE]
+  inv <- data[, invar, drop = TRUE]
+
+  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
+  idx <- match(time, hazard[, "time"])
+  hazard[idx, "hazard"]
+}
+
+lung_df1 = lung_df %>% 
+  mutate(hazard = nelsonaalen(lung_df, time, status, sex),
+         sexc = ifelse(sex != 1, "Female", "Male"))
+
+ggplot(data = lung_df1, aes(x = time, y = hazard, color = sexc)) + 
+  geom_point(alpha = .3) + 
+  geom_line(colour = "blue") + 
+  theme(legend.position = "bottom") +
+  facet_grid(~sexc) +
+  labs(title = "Cumulative Probability Adjusted for Sex", x = "Number of Days", y = "Cumulative Probability of subject's death")
+
+```
+Summary: From the graph it can be inferred that males have a comparatively lower chnaces of survival compared to females.
+
+## Age group
+Dividing the population into two groups (>=70 and < 70) by the ages of the subjects to check if the age of a subject has any affect on the survival.
+```{r}
+# add age group variable
+lung_age =lung_df %>% 
+  mutate(
+    agegrp = ifelse(age >= 70, "Age >= 70", "Age < 70"),
+    agegrpn = ifelse(age >= 70, 1, 0)
+  ) %>% 
+  mutate(agegrpn = as.factor(agegrpn))
+
+# fit NA estimator
+nelsonaalen = function(data, timevar, statusvar, invar) {
+  if (!is.data.frame(data)) {
+    stop("Data must be a data frame")
+  }
+  timevar <- as.character(substitute(timevar))
+  statusvar <- as.character(substitute(statusvar))
+  invar <- as.character(substitute(invar))
+  time <- data[, timevar, drop = TRUE]
+  status <- data[, statusvar, drop = TRUE]
+  inv <- data[, invar, drop = TRUE]
+
+  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
+  idx <- match(time, hazard[, "time"])
+  hazard[idx, "hazard"]
+}
+
+lung_df1 = lung_age %>% 
+  mutate(hazard = nelsonaalen(lung_age, time, status, agegrpn)
+         )
+
+ggplot(data = lung_df1, aes(x = time, y = hazard, color = agegrp)) + 
+  geom_point(alpha = .3) + 
+  geom_line(colour = "blue") + 
+  theme(legend.position = "bottom") +
+  facet_grid(~agegrp) +
+  labs(title = "Cumulative Probability Adjusted for Age Group", x = "Number of Days", y = "Cumulative Probability of subject's death")
+
+```
+Summary: From the graph above, it can be inferred that subjects who are older than 70 years have a comparatively lower chances of survival compared to subjects younger than 70 years.
+
+## Ecog performance score
+```{r}
+# fit NA estimator
+nelsonaalen = function(data, timevar, statusvar, invar) {
+  if (!is.data.frame(data)) {
+    stop("Data must be a data frame")
+  }
+  timevar <- as.character(substitute(timevar))
+  statusvar <- as.character(substitute(statusvar))
+  invar <- as.character(substitute(invar))
+  time <- data[, timevar, drop = TRUE]
+  status <- data[, statusvar, drop = TRUE]
+  inv <- data[, invar, drop = TRUE]
+
+  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
+  idx <- match(time, hazard[, "time"])
+  hazard[idx, "hazard"]
+}
+
+# drop missing ph_ecog obs
+lung_df = lung_df %>% 
+  drop_na(ph_ecog)
+
+lung_df1 = lung_df %>% 
+  mutate(hazard = nelsonaalen(lung_df, time, status, ph_ecog)
+         )
+ggplot(data = lung_df1, aes(x = time, y = hazard, color = ph_ecog)) + 
+  geom_point(alpha = .3) + 
+  geom_line(colour = "blue") + 
+  theme(legend.position = "bottom") +
+  facet_grid(~ph_ecog) +
+  labs(title = "Cumulative Probability Adjusted for Ecog performance score", x = "Number of Days", y = "Cumulative Probability of subject's death")
+
+```
+Summary: according to the observed value, the subjects' with Ecog performance score = 2 have a comparatively higher chances of survival compared to others.
+
+
