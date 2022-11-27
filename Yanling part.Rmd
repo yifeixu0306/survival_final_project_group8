@@ -1,0 +1,96 @@
+---
+title: "Survival Final Project"
+author: "Yanling Xue"
+date: '2022-11-27'
+output: html_document
+---
+
+```{r}
+library(survival)
+library(tidyverse)
+library(ggplot2)
+library(ggfortify)
+library(cmprsk)
+library(ggsurvfit)
+library(survminer)
+```
+
+```{r}
+devtools::install_github("MSKCC-Epi-Bio/tidycmprsk")
+```
+```{r}
+library(tidycmprsk)
+```
+
+
+```{r}
+data(cancer, package="survival")
+
+cancer_df = lung
+
+```
+
+
+#Finding the number of days a person was alive before they died.
+
+```{r}
+dead_df = cancer_df %>% 
+  mutate(dead = case_when(status == 1 ~ 0,
+                          status == 2 ~ 1)) 
+
+km_dead <- with(dead_df, Surv(time, dead))
+
+km_dead <- survfit(Surv(time, dead) ~ 1, data=dead_df)
+
+km_dead %>% autoplot() + ylab("S(t)") + xlab("Time")
+
+summary(km_dead)
+
+summary(km_dead, times = c(300,305,310,315))
+
+```
+
+The median survival time is 310 days.
+
+#cumulative density with a confidence interval
+```{r}
+dead_df=dead_df %>% 
+   mutate(dead = as.factor(dead))
+
+cuminc(Surv(time, dead) ~ 1, data = dead_df) %>% 
+  ggcuminc() + 
+  labs(
+    x = "Days"
+  ) + 
+  add_confidence_interval() +
+  add_risktable()
+```
+As the number of survival days increase, the probability of a person dying decreases.
+
+
+```{r}
+km_sex_fit <- survfit(Surv(time, status) ~ sex, data=cancer_df)
+autoplot(km_sex_fit,conf.int=TRUE,legend.labs=c("Male", "Female"),legend.title="Sex") + ylab("S(t)") + xlab("Time") 
+
+ggsurvplot(km_sex_fit, conf.int=TRUE, pval=TRUE, 
+           legend.labs=c("Male", "Female"), legend.title="Sex",  
+           palette=c("dodgerblue2", "orchid2"), 
+           title="Kaplan-Meier Curve for Lung Cancer Survival")
+
+```
+
+```{r}
+mean(cancer_df$age)
+```
+
+
+```{r}
+age_df = cancer_df %>%
+  mutate(age = case_when(age > 70 ~ "old",
+                         age <= 70 ~ "young")) 
+km_age_fit = survfit(Surv(time, status) ~ age, data = age_df)
+
+autoplot(km_age_fit) + ylab("S(t)") + xlab("Time") 
+```
+
+
