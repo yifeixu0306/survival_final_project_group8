@@ -77,23 +77,98 @@ summary(lung_cohort)
 ```
 
 ```{r}
-#Univariate Analysis - provides summary statistics for each field in the raw data set
+#Univariate
 
-#Age-group()
-#Sex-pie chart
-df = 
+#Age-group
+
+df_age = 
   lung_cohort %>%
-  select(Age, Sex)
-ggplot(df, aes(x = Age)) + 
+  select(Sex, Age) %>%
+  group_by(Sex, Age)
+ggplot(df, aes(x = Age, color = Sex)) + 
+  geom_histogram(fill="white")
+
+#Time
+df_time =
+  lung_cohort %>%
+  select(time)
+ggplot(df_time, aes(x = time)) + 
   geom_histogram()
+
+#Weightloss
+df_wtloss =
+  lung_cohort %>%
+  select(wt.loss)
+ggplot(df_wtloss, aes(x = wt.loss)) + 
+  geom_histogram()
+
+
+
+#Gender-pie chart
+df_sex = data.frame(
+  group = c("Male", "Female"),
+  value = c(60.5, 39.5)
+  )
+head(df_sex)
+pie_sex = 
+  ggplot(df_sex, aes(x="", y=value, fill=group)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0)
+
+
+#ECOG-pie chart
+df_ecog <- data.frame(
+  group = c("0", "1", "2", "3", "missing"),
+  value = c(27.632, 49.561, 21.930, 0.439, 0.439)
+  )
+pie_ecog = 
+  ggplot(df_ecog, aes(x="", y=value, fill=group)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0)
+pie_ecog
+
+
+
 hist(lung_cohort$Age)
 hist(lung_cohort$inst)
-hist(lung_cohort$time)
+hist(lung_cohort$KarnoPH)
+hist(lung_cohort$KarnoPAT)
 barplot(lung_cohort$Sex)
 library(waffle)
 
 waffle(lung_cohort/10, rows=5, size=0.5, 
        title="Cut quality of diamond", 
        xlab="1 square == 10 diamonds")
+```
+
+```{r}
+#Multivariate
+
+# histogram by sex
+df_sex =
+  lung_cohort %>%
+  select(time, Sex)
+head(df_sex)
+
+p = ggplot(df_sex, aes(x=time, color=Sex)) + 
+  geom_histogram(binwidth = 10, fill="white", alpha=0.5, position="identity")
+p
+
+# histogram by Karno
+df_karno = 
+  pivot_longer(
+    lung_cohort,
+    KarnoPH:KarnoPAT,
+    names_to = "karno",
+    names_prefix = "Karno",
+    values_to = "Score"
+  )
+head(df_karno)
+
+hist_karno =
+  ggplot(df_karno, aes(x=Score, fill=karno, color=karno)) + 
+  geom_histogram(binwidth = 10, alpha=0.5, position="identity")
+hist_karno  
+
 ```
 
