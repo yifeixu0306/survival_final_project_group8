@@ -1,0 +1,175 @@
+---
+title: "Modeling"
+author: "Yifei Xu"
+date: "2022-11-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(survival)
+library(tidyverse)
+library(survminer)
+library(StepReg)
+```
+
+```{r}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+
+First, read in the dataset.
+
+```{r, message=FALSE}
+data(cancer, package="survival")
+
+cancer_df=lung
+```
+
+Then, make comparison of the different groups of the attributes using the Kaplan-Meier Curve
+```{r, message=FALSE}
+splots <- list()
+
+# sex
+cancer_sex = cancer_df %>%
+  mutate(Sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) 
+
+km_sex = survfit(Surv(time, status) ~ Sex, data = cancer_sex) 
+splots[[1]] = ggsurvplot(km_sex , 
+                         conf.int = F, 
+                         legend = "bottom", 
+                         legend.title = "Sex",
+                         legend.lab = c("Female", "Male"))
+
+# age
+cancer_age = cancer_df %>%
+  mutate(Age = case_when(age > 70 ~ "> 70",
+                         age <= 70 ~ "<= 70")) 
+km_age = survfit(Surv(time, status) ~ Age, data = cancer_age)
+splots[[2]] = ggsurvplot(km_age , 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "Age",
+                         legend.lab = c("<= 70", "> 70"))
+
+
+# ph.ecog
+cancer_ecog = cancer_df %>%
+  filter(!is.na(ph.ecog)) %>%
+  mutate(ph.ecog = as.factor(ph.ecog))
+
+km_ecog = survfit(Surv(time, status) ~ ph.ecog, data = cancer_ecog)
+splots[[3]] = ggsurvplot(km_ecog , 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "ph.ecog",
+                         legend.lab = c("0", "1", "2", "3"))
+
+
+# ph.karno
+avg_phkarno = mean(as.numeric(cancer_df$ph.karno), na.rm = TRUE)
+
+cancer_phkarno = cancer_df %>%
+  filter(!is.na(ph.karno)) %>%
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
+                         ph.karno <= 80 ~ "<= 80")) 
+
+km_phkarno <- survfit(Surv(time, status) ~ ph.karno, data=cancer_phkarno)
+splots[[4]] = ggsurvplot(km_phkarno , 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "ph.karno",
+                         legend.lab = c("<= 80", "> 80"))
+
+
+# pat.karno
+avg_patkarno = mean(as.numeric(cancer_df$pat.karno), na.rm = TRUE)
+
+cancer_patkarno = cancer_df %>%
+  filter(!is.na(pat.karno)) %>%
+  mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
+                         pat.karno <= 80 ~ "<= 80")) 
+
+km_patkarno <- survfit(Surv(time, status) ~ pat.karno, data = cancer_patkarno)
+splots[[5]] = ggsurvplot(km_patkarno , 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "pat.karno",
+                         legend.lab = c("<= 80", "> 80"))
+
+# meal.cal
+avg_meal_cal = mean(as.numeric(cancer_df$meal.cal), na.rm = TRUE)
+
+cancer_meal_cal = cancer_df %>%
+  filter(!is.na(meal.cal)) %>%
+  mutate(meal.cal = case_when(meal.cal > avg_meal_cal ~ "> average",
+                         meal.cal <= avg_meal_cal ~ "<= average")) 
+
+km_meal_cal <- survfit(Surv(time, status) ~ meal.cal, data = cancer_meal_cal)
+splots[[6]] = ggsurvplot(km_meal_cal, 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "meal_cal",
+                         legend.lab = c("<= average", "> average"))
+
+# wt.loss
+avg_wt_loss = mean(as.numeric(cancer_df$wt.loss), na.rm = TRUE)
+
+cancer_wt_loss = cancer_df %>%
+  filter(!is.na(wt.loss)) %>%
+  mutate(wt.loss = case_when(wt.loss > avg_wt_loss ~ "> average",
+                         wt.loss <= avg_wt_loss ~ "<= average")) 
+
+km_wt_loss <- survfit(Surv(time, status) ~ wt.loss, data = cancer_wt_loss)
+splots[[7]] = ggsurvplot(km_wt_loss, 
+                         conf.int = F, 
+                         legend = "bottom",
+                         legend.title = "wt_loss",
+                         legend.lab = c("<= average", "> average"))
+
+
+arrange_ggsurvplots(splots, 
+                    print = TRUE,
+                    title = "Comparison of the different attribute groups using the Kaplan Meier Curve",
+                    ncol = 2, 
+                    nrow = 2)
+```
+
+Next, we use stepwise method to select significant variables.
+
+```{r, message=FALSE}
+cancer_mod = cancer_df %>%
+  mutate(status1 = ifelse(status==2,1,0)) %>%
+  drop_na()
+
+formula = Surv(time, status1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss
+
+stepwiseCox(formula, 
+            cancer_mod,
+            include=NULL,
+            selection=c("bidirection"),
+            select="AIC",
+            method=c("efron"),
+            sle=0.15,
+            sls=0.15,
+            weights=NULL,
+            best=NULL)
+```
+
+Then we fit a PH model.
+
+```{r, message=FALSE}
+cox_mod = coxph(Surv(time, status1) ~ sex  + ph.ecog + ph.karno + pat.karno + wt.loss, data = cancer_mod)
+summary(cox_mod)
+```
+
+
+
