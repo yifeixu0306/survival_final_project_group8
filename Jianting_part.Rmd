@@ -1,0 +1,176 @@
+---
+title: "Survival Analysis_Final Project"
+output: html_document
+date: "2022-11-20"
+---
+
+```{r }
+library(tidyverse)
+library(dplyr)
+library(survival)
+library(ggplot2)
+library(visR)
+library(hrbrthemes)
+```
+
+
+** Make standalone table for report
+```{r setup, include=FALSE}
+# Metadata Title
+DATASET <- paste0("NCCTG Lung Cancer Dataset (from survival package ", 
+                  packageVersion("survival"), ")")
+
+# Save original options()
+old <- options()  
+
+# Global formatting options
+options(digits = 3)
+
+# Global ggplot settings
+theme_set(theme_bw())
+
+# Global table settings 
+options(DT.options = list(pageLength = 10, 
+                          language = list(search = 'Filter:'), 
+                          scrollX = TRUE))
+
+lung_cohort <- survival::lung
+
+# Change gender to be a factor and rename some variables to make output look nicer
+lung_cohort <- lung_cohort %>%  
+  dplyr::mutate(sex = as.factor(ifelse(sex == 1, "Male", "Female")), ph.ecog = factor(ph.ecog))  %>%  
+  dplyr::rename(Age = "age", Sex = "sex", Status = "status", ECOG = "ph.ecog", KarnoPH = "ph.karno", KarnoPAT = "pat.karno", Meal = "meal.cal", Weightloss="wt.loss")
+
+# Restore original options()
+options(old)
+```
+
+
+```{r pressure, echo=FALSE}
+str(lung_cohort)
+
+# Select variables of interest and change names to look nicer
+lung_cohort_tab1 <- lung_cohort %>%  
+  dplyr::select(Age, Sex, ECOG, KarnoPH, KarnoPAT, Meal, Weightloss) 
+
+# Create a table one
+tab1 <- visR::get_tableone(lung_cohort_tab1)
+
+# Render the tableone
+visR::render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
+visR::tableone(lung_cohort_tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
+
+```
+
+** Make figures for presentation
+```{r Univariate analysis}
+# brief look at the shape of data
+head(lung_cohort)
+names(lung_cohort)
+str(lung_cohort)
+#Shape of the data
+dim(lung_cohort)
+#Summary
+summary(lung_cohort)
+
+```
+
+```{r}
+#Univariate
+
+#Age-group
+df_age = 
+  lung_cohort %>%
+  select(Sex, Age) %>%
+  group_by(Sex, Age)
+ggplot(df_age, aes(x = Age, fill=Sex, color = Sex)) + 
+  geom_histogram(position = "identity", alpha = 0.5)
+
+#Time
+df_time =
+  lung_cohort %>%
+  select(time)
+ggplot(df_time, aes(x = time)) + 
+  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
+  geom_density() 
+
+
+#Weightloss
+df_wtloss =
+  lung_cohort %>%
+  select(Weightloss)
+ggplot(df_wtloss, aes(x = Weightloss)) + 
+  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
+  geom_density() 
+
+
+#Gender-pie chart
+df_sex = data.frame(
+  group = c("Male", "Female"),
+  value = c(60.5, 39.5)
+  )
+df_sex = df_sex %>%
+  arrange(desc(group)) %>%
+  mutate(prop = value / sum(df_sex$value)*100) %>%
+  mutate(ypos = cumsum(prop)- 0.5*prop)
+pie_sex = 
+  ggplot(df_sex, aes(x="", y=prop, fill=group)) + 
+  geom_bar(width = 1, stat = "identity", color="white") + 
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_brewer(palette="Set2") +
+  geom_text(aes(y = ypos, label = group), color = "white", size=6)
+pie_sex
+
+
+#ECOG-pie chart
+df_ecog <- data.frame(
+  group = c("0", "1", "2", "3", "missing"),
+  value = c(27.632, 49.561, 21.930, 0.439, 0.439)
+  )
+df_ecog = df_ecog %>%
+  arrange(desc(group)) %>%
+  mutate(prop = value / sum(df_sex$value)*100) %>%
+  mutate(ypos = cumsum(prop)- 0.5*prop)
+pie_ecog = 
+  ggplot(df_ecog, aes(x="", y=value, fill=group)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) +
+  theme_void() +
+  scale_fill_brewer(palette="Set2") +
+  geom_text(aes(y = ypos, label = group), color = "white", size=6)
+pie_ecog
+
+```
+
+```{r}
+#Multivariate
+
+# histogram by sex
+df_sex =
+  lung_cohort %>%
+  select(time, Sex)
+head(df_sex)
+
+hist_sex = ggplot(df_sex, aes(x=time, fill= Sex, color=Sex)) + 
+  geom_histogram(binwidth = 10, alpha=0.5, position="identity")
+hist_sex
+
+# histogram by Karno
+df_karno = 
+  pivot_longer(
+    lung_cohort,
+    KarnoPH:KarnoPAT,
+    names_to = "karno",
+    names_prefix = "Karno",
+    values_to = "Score"
+  )
+head(df_karno)
+
+hist_karno =
+  ggplot(df_karno, aes(x=Score, fill=karno, color=karno)) + 
+  geom_histogram(binwidth = 10, alpha=0.5, position="identity")
+hist_karno  
+
+```
+
