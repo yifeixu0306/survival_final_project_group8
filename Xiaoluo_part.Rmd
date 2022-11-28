@@ -1,0 +1,138 @@
+---
+title: "Survival Final Project"
+author: "Xiaoluo Jiao"
+date: "11/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(survival)
+library(tidyverse)
+library(StepReg)
+library(Rcpp)
+library(survminer)
+library(MASS)
+
+```
+
+## Import dataset
+
+```{r}
+data(cancer, package = "survival")
+
+cancer_df = lung
+```
+
+## Model
+
+Firstly, construct the proportional hazards model we got in previous step:
+
+```{r}
+# drop missing values
+cancer_mod = cancer_df %>%
+ # mutate(status1 = ifelse(status==2,1,0)) %>% #???
+  drop_na()
+
+# model by stepwise
+cox_mod_1 = coxph(Surv(time, status) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss, data = cancer_mod)
+summary(cox_mod_1)
+```
+
+# Diagnosis 
+
+The Cox proportional hazards model makes two assumptions: \
+(1) survival curves for different strata must have hazard functions that are proportional over the time t \
+(2) the relationship between the log hazard and each covariate is linear, which can be verified with residual plots.
+
+## Schoenfeld Residuals
+```{r}
+test.ph = cox.zph(cox_mod_1)
+test.ph
+```
+
+The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
+
+```{r}
+ggcoxzph(test.ph)
+```
+
+## Graphical Approach - log-log curves
+### sex
+```{r}
+test_sex <- survfit(Surv(time, status) ~ sex, data = cancer_mod)
+
+ggsurvplot(test_sex, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Log-log Curve for Sex",
+           legend.lab = c("Male", "Female"))
+```
+
+### ph.ecog
+```{r}
+data_ecog = cancer_mod %>%
+  mutate(ph.ecog = as.factor(ph.ecog))
+
+test_ecog <- survfit(Surv(time, status) ~ ph.ecog, data = data_ecog)
+
+ggsurvplot(test_ecog, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Log-log Curve for ECOG Performance Score",
+           legend.lab = c("0", "1", "2", "3"))
+```
+
+### ph.karno
+```{r}
+data_phkarno = cancer_mod %>%
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
+                              ph.karno <= 80 ~ "<= 80")) 
+
+test_phkarno <- survfit(Surv(time, status) ~ ph.karno, data = data_phkarno)
+
+ggsurvplot(test_phkarno, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Karnofsky Score by Physician",
+           legend.lab = c("<= 80", "> 80"))
+```
+
+### pat.karno
+```{r}
+data_patkarno = cancer_mod %>%
+  mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
+                               pat.karno <= 80 ~ "<= 80")) 
+
+test_patkarno <- survfit(Surv(time, status) ~ pat.karno, data = data_patkarno)
+
+ggsurvplot(test_patkarno, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Karnofsky Score by Patient",
+           legend.lab = c("<= 80", "> 80"))
+```
+
+### wt.loss
+```{r}
+avg_meal_cal = mean(as.numeric(cancer_df$meal.cal), na.rm = TRUE)
+
+data_meal = cancer_mod %>%
+  mutate(meal.cal = case_when(meal.cal > avg_meal_cal ~ "> average",
+                              meal.cal <= avg_meal_cal ~ "<= average")) 
+
+test_meal_cal = survfit(Surv(time, status) ~ meal.cal, data = data_meal)
+
+ggsurvplot(test_meal_cal, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Calories Consumed at Meals",
+           legend.lab = c("<= average", "> average"))
+```
+
