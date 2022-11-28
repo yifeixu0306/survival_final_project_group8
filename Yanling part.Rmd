@@ -117,3 +117,8 @@ ggsurvplot(km_ecog_fit, pval = TRUE,conf.int = TRUE, surv.median.line = "hv",  g
 autoplot(km_ecog_fit) + ylab("S(t)") + xlab("Time") 
 ```
 
+
+
+
+
+
