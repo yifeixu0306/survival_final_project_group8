@@ -1,0 +1,14 @@
+---
+title: "P8108 Final Project"
+output: pdf_document
+date: "2022-11-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
