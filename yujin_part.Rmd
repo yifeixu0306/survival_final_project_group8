@@ -135,21 +135,6 @@ lung_age =lung_df %>%
   mutate(agegrpn = as.factor(agegrpn))
 
 # fit NA estimator
-nelsonaalen = function(data, timevar, statusvar, invar) {
-  if (!is.data.frame(data)) {
-    stop("Data must be a data frame")
-  }
-  timevar <- as.character(substitute(timevar))
-  statusvar <- as.character(substitute(statusvar))
-  invar <- as.character(substitute(invar))
-  time <- data[, timevar, drop = TRUE]
-  status <- data[, statusvar, drop = TRUE]
-  inv <- data[, invar, drop = TRUE]
-
-  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
-  idx <- match(time, hazard[, "time"])
-  hazard[idx, "hazard"]
-}
 
 lung_df1 = lung_age %>% 
   mutate(hazard = nelsonaalen(lung_age, time, status, agegrpn)
@@ -168,21 +153,7 @@ Summary: From the graph above, it can be inferred that subjects who are older th
 ## Ecog performance score
 ```{r}
 # fit NA estimator
-nelsonaalen = function(data, timevar, statusvar, invar) {
-  if (!is.data.frame(data)) {
-    stop("Data must be a data frame")
-  }
-  timevar <- as.character(substitute(timevar))
-  statusvar <- as.character(substitute(statusvar))
-  invar <- as.character(substitute(invar))
-  time <- data[, timevar, drop = TRUE]
-  status <- data[, statusvar, drop = TRUE]
-  inv <- data[, invar, drop = TRUE]
 
-  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
-  idx <- match(time, hazard[, "time"])
-  hazard[idx, "hazard"]
-}
 
 # drop missing ph_ecog obs
 lung_df = lung_df %>% 

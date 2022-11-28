@@ -606,21 +606,6 @@ lung_age =lung_df %&gt;%
   mutate(agegrpn = as.factor(agegrpn))
 
 # fit NA estimator
-nelsonaalen = function(data, timevar, statusvar, invar) {
-  if (!is.data.frame(data)) {
-    stop(&quot;Data must be a data frame&quot;)
-  }
-  timevar &lt;- as.character(substitute(timevar))
-  statusvar &lt;- as.character(substitute(statusvar))
-  invar &lt;- as.character(substitute(invar))
-  time &lt;- data[, timevar, drop = TRUE]
-  status &lt;- data[, statusvar, drop = TRUE]
-  inv &lt;- data[, invar, drop = TRUE]
-
-  hazard &lt;- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
-  idx &lt;- match(time, hazard[, &quot;time&quot;])
-  hazard[idx, &quot;hazard&quot;]
-}
 
 lung_df1 = lung_age %&gt;% 
   mutate(hazard = nelsonaalen(lung_age, time, status, agegrpn)
@@ -640,21 +625,7 @@ compared to subjects younger than 70 years.</p>
 <div id="ecog-performance-score" class="section level2">
 <h2>Ecog performance score</h2>
 <pre class="r"><code># fit NA estimator
-nelsonaalen = function(data, timevar, statusvar, invar) {
-  if (!is.data.frame(data)) {
-    stop(&quot;Data must be a data frame&quot;)
-  }
-  timevar &lt;- as.character(substitute(timevar))
-  statusvar &lt;- as.character(substitute(statusvar))
-  invar &lt;- as.character(substitute(invar))
-  time &lt;- data[, timevar, drop = TRUE]
-  status &lt;- data[, statusvar, drop = TRUE]
-  inv &lt;- data[, invar, drop = TRUE]
 
-  hazard &lt;- survival::basehaz(survival::coxph(survival::Surv(time, status) ~ inv ))
-  idx &lt;- match(time, hazard[, &quot;time&quot;])
-  hazard[idx, &quot;hazard&quot;]
-}
 
 # drop missing ph_ecog obs
 lung_df = lung_df %&gt;% 

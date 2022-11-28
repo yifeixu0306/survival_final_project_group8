@@ -95,4 +95,32 @@ km_age_fit = survfit(Surv(time, status) ~ age, data = age_df)
 autoplot(km_age_fit) + ylab("S(t)") + xlab("Time") 
 ```
 
+```{r}
+age_df = cancer_df %>%
+  mutate(age = case_when(age > 70 ~ "old",
+                         age <= 70 ~ "young")) 
+km_age_fit = survfit(Surv(time, status) ~ age, data = age_df)
+
+autoplot(km_age_fit) + ylab("S(t)") + xlab("Time") 
+```
+
+```{r}
+ecog_df = cancer_df %>% 
+  mutate(ph.ecog = as.factor(ph.ecog)) %>% 
+  filter(!is.na(ph.ecog)) %>% 
+  filter(ph.ecog != "3" )
+
+km_ecog_fit = survfit(Surv(time, status) ~ ph.ecog, data = ecog_df)
+
+km_ecog_fit_ = survfit(Surv(time, status) ~ ph.ecog, data = cancer_df)
+
+ggsurvplot(km_ecog_fit_, pval = TRUE,conf.int = TRUE, surv.median.line = "hv",  ggtheme = theme_bw(), legend = "bottom", legend.title = "ECOG Performance Score",legend.lab = c("0", "1", "2","3"))
+
+autoplot(km_ecog_fit) + ylab("S(t)") + xlab("Time") 
+```
+
+
+
+
+
 
