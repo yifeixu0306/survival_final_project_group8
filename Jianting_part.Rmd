@@ -11,7 +11,9 @@ library(survival)
 library(ggplot2)
 library(visR)
 library(hrbrthemes)
+library(caret)
 ```
+
 
 
 ** Make standalone table for report
@@ -78,31 +80,29 @@ summary(lung_cohort)
 ```{r}
 #Univariate
 
-#Age-group
-df_age = 
-  lung_cohort %>%
-  select(Sex, Age) %>%
-  group_by(Sex, Age)
-ggplot(df_age, aes(x = Age, fill=Sex, color = Sex)) + 
-  geom_histogram(position = "identity", alpha = 0.5)
-
 #Time
-df_time =
-  lung_cohort %>%
-  select(time)
-ggplot(df_time, aes(x = time)) + 
+p_time = 
+  ggplot(lung_cohort, aes(x = time)) + 
   geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
   geom_density() 
-
+p_time
 
 #Weightloss
 df_wtloss =
-  lung_cohort %>%
-  select(Weightloss)
-ggplot(df_wtloss, aes(x = Weightloss)) + 
+  ggplot(lung_cohort, aes(x = Weightloss)) + 
   geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
   geom_density() 
 
+#Meal
+df_meal =
+  ggplot(lung_cohort, aes(x = Meal)) + 
+  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
+  geom_density() 
+
+#Age-group
+p_age = 
+  ggplot(lung_cohort, aes(x = Age, fill=Sex, color = Sex)) + 
+  geom_histogram(position = "identity", alpha = 0.5)
 
 #Gender-pie chart
 df_sex = data.frame(
@@ -121,7 +121,6 @@ pie_sex =
   scale_fill_brewer(palette="Set2") +
   geom_text(aes(y = ypos, label = group), color = "white", size=6)
 pie_sex
-
 
 #ECOG-pie chart
 df_ecog <- data.frame(
@@ -172,5 +171,13 @@ hist_karno =
   geom_histogram(binwidth = 10, alpha=0.5, position="identity")
 hist_karno  
 
+lung_cohort$Status = as.factor(lung_cohort$Status)
+
+featurePlot(x = lung_cohort[,c(2, 4)], 
+            y = lung_cohort$Status,
+            scales = list(x = list(relation = "free"), 
+                          y = list(relation = "free")),
+            plot = "density", pch = "|", 
+            auto.key = list(columns = 3))
 ```
 
