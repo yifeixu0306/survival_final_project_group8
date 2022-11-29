@@ -50,6 +50,7 @@ lung_df = lung_df %>%
 ## 2 Exploratory Analysis
 
 ### 2.1 Summary table
+
 ```{r, message=FALSE}
 # Metadata Title
 DATASET <- paste0("NCCTG Lung Cancer Dataset (from survival package ", 
@@ -109,7 +110,8 @@ render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
 
 
 
-### 2.3 Correlation plot between variables.
+### 2.3 Correlation plot between variables
+
 ```{r}
 # Drop missing values
 lung_df_1 = lung_df %>%
@@ -215,6 +217,7 @@ Fleming-Harrington estimator for median survival is 310, which is equal to K-M e
 In this section, we will make comparison of the different groups of the attributes using the Kaplan-Meier Curve and conduct log-rank test.
 
 ### 4.1 Sex
+
 ```{r, message=FALSE}
 splots <- list()
 
@@ -242,6 +245,7 @@ diff_sex
 ```
 
 ### 4.2 Age
+
 ```{r}
 # fit
 lung_age = lung_df %>%
@@ -292,6 +296,7 @@ diff_ecog
 ```
 
 ### 4.4 Karnofsky performance score rated by physician
+
 ```{r}
 # fit
 lung_phkarno = lung_df %>%
@@ -317,6 +322,7 @@ diff_phkarno
 ```
 
 ### 4.5 Karnofsky performance score as rated by patient
+
 ```{r}
 # fit
 lung_patkarno = lung_df %>%
@@ -342,6 +348,7 @@ diff_patkarno
 ```
 
 ### 4.6 Calories consumed at meals
+
 ```{r}
 # fit
 avg_meal_cal = mean(as.numeric(lung_df$meal.cal), na.rm = TRUE)
@@ -418,6 +425,7 @@ arrange_ggsurvplots(splots,
 ## 5 Model Fitting (Cox Model)
 
 ### 5.1 Full model
+
 ```{r}
 lung_mod = lung_df %>%
   drop_na()
@@ -429,13 +437,14 @@ summary(cox_mod_full)
 
 ### 5.2 Select variables using different methods
 
-#### 5.2.1 Remove insignificant varibale
+### 5.2.1 Remove insignificant varibale
+
 ```{r}
 cox_mod_1 = coxph(Surv(time, status==1) ~ sex + ph.ecog, data = lung_mod)
 summary(cox_mod_full)
 ```
 
-#### 5.2.2 Stepwise method 
+### 5.2.2 Stepwise method 
 
 ```{r, message=FALSE}
 formula = Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss
@@ -456,7 +465,8 @@ cox_mod_2 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno +
 summary(cox_mod_2)
 ```
 
-#### 5.2.3 Add interaction term
+### 5.2.3 Add interaction term
+
 ```{r}
 cox_mod_3 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss + ph.karno*ph.ecog, 
                   data = lung_mod)
@@ -577,6 +587,7 @@ gplots[[4]] = ggsurvplot(test_patkarno,
 ```
 
 ### 6.2.5 Weight loss
+
 ```{r}
 avg_meal_cal = mean(as.numeric(lung_df$meal.cal), na.rm = TRUE)
 
@@ -607,6 +618,7 @@ arrange_ggsurvplots(gplots,
 ### 6.3 Observed vs. Fitted
 
 ### 6.4 Test interaction for proportionality
+
 ```{r}
 cox_mod_4 = coxph(Surv(time, status == 1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss 
                   + sex * log(time) + ph.ecog * log(time) + ph.karno * log(time) + pat.karno * log(time) 
