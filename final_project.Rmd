@@ -5,10 +5,643 @@ date: "2022-11-28"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(survival)
+library(ggplot2)
+library(visR)
+library(hrbrthemes)
+library(corrplot)
+library(biostat3)
+library(ggfortify)
+library(cmprsk)
+library(ggsurvfit)
+library(survminer)
+library(tidycmprsk)
+library(StepReg)
+library(Rcpp)
+library(MASS)
+```
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+## 1 Import Dataset and Data Preprocess
+
+```{r, message=FALSE}
+data(cancer, package="survival")
+
+lung_df=lung
+
+lung_df = lung_df %>%
+  mutate(status = case_when(status == 1 ~ 0,
+                            status == 2 ~ 1)) %>%
+  mutate(sex = as.factor(sex),
+         ph.ecog = as.factor(ph.ecog), 
+         status = as.factor(status))
+```
+
+## 2 Exploratory Analysis
+
+### 2.1 Summary table
+```{r, message=FALSE}
+# Metadata Title
+DATASET <- paste0("NCCTG Lung Cancer Dataset (from survival package ", 
+                  packageVersion("survival"), ")")
+
+# Save original options()
+old <- options()  
+
+# Global formatting options
+options(digits = 3)
+
+# Global ggplot settings
+theme_set(theme_bw())
+
+# Global table settings 
+options(DT.options = list(pageLength = 10, 
+                          language = list(search = 'Filter:'), 
+                          scrollX = TRUE))
+
+# Restore original options()
+options(old)
+```
+
+```{r, message=FALSE}
+str(lung_df)
+
+# Select variables of interest and change names to look nicer
+lung_tab <- lung_df %>%  
+  dplyr::select(age, sex, status, ph.ecog, ph.karno, pat.karno, meal.cal, wt.loss) %>%
+  mutate(sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) %>%
+  mutate(status = case_when(status == 0 ~ "Censored",
+                            status == 1 ~ "Dead")) %>%
+  mutate(sex = as.factor(sex),
+         ph.ecog = as.factor(ph.ecog), 
+         status = as.factor(status)) %>%
+  rename("Age" = "age", 
+         "Sex" = "sex", 
+         "Censoring Status" = "status", 
+         "ECOG Performance Score" = "ph.ecog", 
+         "Karnofsky Performance Score Rated by Physician" = "ph.karno", 
+         "Karnofsky Performance Score Rated by Patient" = "pat.karno", 
+         "Calories Consumed at Meals" = "meal.cal", 
+         "Weight Loss in Last Six Months"="wt.loss") 
+
+# Create a table one
+tab1 <- get_tableone(lung_tab)
+
+# Render the tableone
+render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
+
+```
+
+### 2.2 Distribution plots for each variable
+
+
+
+
+
+### 2.3 Correlation plot between variables.
+```{r}
+# Drop missing values
+lung_df_1 = lung_df %>%
+  drop_na()
+
+# Plot the correlation
+corr = data.frame(lapply(lapply(lung_df_1, as.factor), as.numeric))
+corrplot(cor(corr), type = "lower")
+```
+
+## 3 Non-parametric Estimation
+
+### 3.1 Life-table
+
+```{r}
+life_table = biostat3::lifetab2(Surv(time, status==1) ~ 1, lung_df, breaks = seq(0, 1200, 100))
+
+life_table %>%
+  knitr::kable(caption = "Life-table Estimate",
+               digits = 4)
+```
+
+
+### 3.2 Kaplan-Meier method
+
+```{r}
+# Find the number of days a person was alive before they died.
+km_dead <- with(lung_df, Surv(time, status))
+
+km_dead <- survfit(Surv(time, status==1) ~ 1, data=lung_df)
+
+# K-M plot
+km_dead %>% autoplot() + labs(title="Kaplan-Meier Survival Cure with Confidence Interval", 
+                              x="Time (Days)", 
+                              y="Survival Probability S(t)")
+
+# Median survival time
+summary(km_dead)
+
+summary(km_dead, times = c(300,305,310,315))
+
+```
+The median survival time is 310 days.
+
+```{r}
+# cumulative density with a confidence interval
+cuminc(Surv(time, status) ~ 1, data = lung_df) %>% 
+  ggcuminc() + 
+  labs(
+    x = "Time (Days)"
+  ) + 
+  add_confidence_interval() +
+  add_risktable()
+```
+As the number of survival days increase, the probability of a person dying decreases.
+
+### 3.3 Nelson-Aalen method 
+
+### 3.3.1 Overall Nelson-Aalen Estimator  
+
+```{r}
+nelsonaalen = function(data, timevar, statusvar) {
+  if (!is.data.frame(data)) {
+    stop("Data must be a data frame")
+  }
+  timevar <- as.character(substitute(timevar))
+  statusvar <- as.character(substitute(statusvar))
+  time <- data[, timevar, drop = TRUE]
+  status <- data[, statusvar, drop = TRUE]
+
+  hazard <- survival::basehaz(survival::coxph(survival::Surv(time, status==1) ~ 1))
+  idx <- match(time, hazard[, "time"])
+  hazard[idx, "hazard"]
+}
+
+hazard = nelsonaalen(lung_df, time, status)
+# plot(x = lung_df$time, main="Cumulative Probability for Event of Interest (Death)", y = hazard, ylab = "Cumulative Probability of subject's death", xlab = "Number of Days") 
+
+
+lung_df_2 = lung_df %>% 
+  mutate(hazard = nelsonaalen(lung_df, time, status))
+
+ggplot(data = lung_df_2, aes(x = time, y = hazard)) + 
+  geom_point(alpha = .3) +
+  geom_line(colour = "blue") + 
+  theme(legend.position = "bottom") +
+  labs(
+    title = "Cumulative Hazard Rate for Event of Interest (Death)",
+    x = "Time (Days)",
+    y = "Cumulative Hazard Rate of Subject's Death"
+  )
+```
+
+### 3.3.2 Fleming-Harrington Estimator  
+Once the H(t) of Nelson-Aalen hazard estimator is obtained, Fleming-Harrington estimator for survival function can be obtained.
+```{r}
+survfit(Surv(time, status==1) ~ 1, lung_df, stype = 1, ctype = 2)
+```
+Fleming-Harrington estimator for median survival is 310, which is equal to K-M estimator.
+
+## 4 Hypothesis testing
+
+In this section, we will make comparison of the different groups of the attributes using the Kaplan-Meier Curve and conduct log-rank test.
+
+### 4.1 Sex
+```{r, message=FALSE}
+splots <- list()
+
+# fit
+lung_sex = lung_df %>%
+  drop_na(sex) %>%
+  mutate(Sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) 
+
+fit_sex = survfit(Surv(time, status==1) ~ Sex, data = lung_sex) 
+summary(fit_sex)$table
+
+# visualization
+splots[[1]] = ggsurvplot(fit_sex,
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", # Specify median survival
+                         ggtheme = theme_bw(), # Change ggplot2 theme
+                         legend = "bottom", 
+                         legend.title = "Sex",
+                         legend.lab = c("Male", "Female"))
+
+# log-rank test
+diff_sex = survdiff(Surv(time, status==1) ~ Sex, data = lung_sex) 
+diff_sex
+```
+
+### 4.2 Age
+```{r}
+# fit
+lung_age = lung_df %>%
+  drop_na(age) %>%
+  mutate(Age = case_when(age > 70 ~ "> 70",
+                         age <= 70 ~ "<= 70")) 
+
+fit_age = survfit(Surv(time, status==1) ~ Age, data = lung_age)
+summary(fit_age)$table
+
+# visualization
+splots[[2]] = ggsurvplot(fit_age,
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom", 
+                         legend.title = "Age",
+                         legend.lab = c("<= 70", "> 70"))
+
+# log-rank test
+diff_age = survdiff(Surv(time, status==1) ~ Age, data = lung_age) 
+diff_age
+```
+
+### 4.3 ECOG performance score
+
+```{r}
+# fit
+lung_ecog = lung_df %>%
+  filter(!is.na(ph.ecog)) %>%
+  mutate(ph.ecog = as.factor(ph.ecog))
+
+fit_ecog = survfit(Surv(time, status==1) ~ ph.ecog, data = lung_ecog)
+summary(fit_ecog)$table
+
+# visualization
+splots[[3]] = ggsurvplot(fit_ecog,
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom", 
+                         legend.title = "ECOG Performance Score",
+                         legend.lab = c("0", "1", "2", "3"))
+
+# log-rank test
+diff_ecog = survdiff(Surv(time, status==1) ~ ph.ecog, data = lung_ecog) 
+diff_ecog
+```
+
+### 4.4 Karnofsky performance score rated by physician
+```{r}
+# fit
+lung_phkarno = lung_df %>%
+  filter(!is.na(ph.karno)) %>%
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
+                         ph.karno <= 80 ~ "<= 80")) 
+
+fit_phkarno = survfit(Surv(time, status==1) ~ ph.karno, data=lung_phkarno)
+summary(fit_phkarno)$table
+
+# visualization
+splots[[4]] = ggsurvplot(fit_phkarno,
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom", 
+                         legend.title = "Karnofsky Score by Physician",
+                         legend.lab = c("<= 80", "> 80"))
+
+# log-rank test
+diff_phkarno = survdiff(Surv(time, status==1) ~ ph.karno, data = lung_phkarno) 
+diff_phkarno
+```
+
+### 4.5 Karnofsky performance score as rated by patient
+```{r}
+# fit
+lung_patkarno = lung_df %>%
+  filter(!is.na(pat.karno)) %>%
+  mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
+                         pat.karno <= 80 ~ "<= 80")) 
+
+fit_patkarno = survfit(Surv(time, status==1) ~ pat.karno, data=lung_patkarno)
+summary(fit_patkarno)$table
+
+# visualization
+splots[[5]] = ggsurvplot(fit_patkarno,
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom", 
+                         legend.title = "Karnofsky Score by Patient",
+                         legend.lab = c("<= 80", "> 80"))
+
+# log-rank test
+diff_patkarno = survdiff(Surv(time, status==1) ~ pat.karno, data = lung_patkarno) 
+diff_patkarno
+```
+
+### 4.6 Calories consumed at meals
+```{r}
+# fit
+avg_meal_cal = mean(as.numeric(lung_df$meal.cal), na.rm = TRUE)
+
+lung_meal_cal = lung_df %>%
+  filter(!is.na(meal.cal)) %>%
+  mutate(meal.cal = case_when(meal.cal > avg_meal_cal ~ "> average",
+                         meal.cal <= avg_meal_cal ~ "<= average")) 
+
+fit_meal_cal = survfit(Surv(time, status==1) ~ meal.cal, data = lung_meal_cal)
+summary(fit_meal_cal)$table
+
+
+splots[[6]] = ggsurvplot(fit_meal_cal, 
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom",
+                         legend.title = "Calories Consumed at Meals",
+                         legend.lab = c("<= average", "> average"))
+
+# log-rank test
+diff_meal_cal = survdiff(Surv(time, status==1) ~ meal.cal, data = lung_meal_cal) 
+diff_meal_cal
+
+```
+
+### 4.7 Weight loss
+
+```{r}
+# fit
+avg_wt_loss = mean(as.numeric(lung_df$wt.loss), na.rm = TRUE)
+
+lung_wt_loss = lung_df %>%
+  filter(!is.na(wt.loss)) %>%
+  mutate(wt.loss = case_when(wt.loss > avg_wt_loss ~ "> average",
+                         wt.loss <= avg_wt_loss ~ "<= average")) 
+
+fit_wt_loss <- survfit(Surv(time, status==1) ~ wt.loss, data = lung_wt_loss)
+summary(fit_wt_loss)$table
+
+# visualization
+splots[[7]] = ggsurvplot(fit_wt_loss, 
+                         pval = TRUE, conf.int = TRUE,
+                         surv.median.line = "hv", 
+                         ggtheme = theme_bw(), 
+                         legend = "bottom",
+                         legend.title = "wt_loss",
+                         legend.lab = c("<= average", "> average"))
+
+# log-rank test
+diff_wt_loss = survdiff(Surv(time, status==1) ~ wt.loss, data = lung_wt_loss) 
+diff_wt_loss
+
 ```
 
 ```{r}
-library(tidyverse)
+knitr::opts_chunk$set(
+	fig.width = 16, 
+  fig.height = 20
+)
 ```
+
+```{r}
+# combine the plots
+arrange_ggsurvplots(splots, 
+                    print = TRUE,
+                    title = "Comparison of the Different Attribute Groups Using the Kaplan-Meier Curve",
+                    ncol = 2, 
+                    nrow = 4)
+
+```
+
+## 5 Model Fitting (Cox Model)
+
+### 5.1 Full model
+```{r}
+lung_mod = lung_df %>%
+  drop_na()
+
+# full model
+cox_mod_full = coxph(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss, data = lung_mod)
+summary(cox_mod_full)
+```
+
+### 5.2 Select variables using different methods
+
+#### 5.2.1 Remove insignificant varibale
+```{r}
+cox_mod_1 = coxph(Surv(time, status==1) ~ sex + ph.ecog, data = lung_mod)
+summary(cox_mod_full)
+```
+
+#### 5.2.2 Stepwise method 
+
+```{r, message=FALSE}
+formula = Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss
+
+stepwiseCox(formula, 
+            lung_mod,
+            include=NULL,
+            selection=c("bidirection"),
+            select="AIC",
+            method=c("breslow"),
+            sle=0.15,
+            sls=0.15,
+            weights=NULL,
+            best=NULL)
+
+
+cox_mod_2 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss, data = lung_mod)
+summary(cox_mod_2)
+```
+
+#### 5.2.3 Add interaction term
+```{r}
+cox_mod_3 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss + ph.karno*ph.ecog, 
+                  data = lung_mod)
+summary(cox_mod_3)
+```
+
+### 5.3 Model Comparison
+
+```{r}
+# AIC
+aic_full = AIC(cox_mod_full)
+aic_1 = AIC(cox_mod_1)
+aic_2 = AIC(cox_mod_2)
+aic_3 = AIC(cox_mod_3)
+
+AIC = c(aic_full, aic_1, aic_2, aic_3)
+
+# BIC
+bic_full = BIC(cox_mod_full)
+bic_1 = BIC(cox_mod_1)
+bic_2 = BIC(cox_mod_2)
+bic_3 = BIC(cox_mod_3)
+
+BIC = c(bic_full, bic_1, bic_2, bic_3)
+
+mod_comp = data.frame("AIC" = AIC,
+                      "BIC" = BIC)
+rownames(mod_comp) = c("Full model", "Model 1", "Model 2", "Model 3")
+
+mod_comp
+```
+
+
+## 6 Model Diagnostics  
+
+The Cox proportional hazards model makes two assumptions: \
+(1) survival curves for different strata must have hazard functions that are proportional over the time t \
+(2) the relationship between the log hazard and each covariate is linear, which can be verified with residual plots.
+
+### 6.1 Schoenfeld Residuals
+
+```{r}
+test.ph = cox.zph(cox_mod_2)
+test.ph
+```
+
+The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
+
+```{r}
+ggcoxzph(test.ph)
+```
+
+### 6.2 Graphical Approach - log-log curves
+
+### 6.2.1 Sex
+
+```{r}
+gplots <- list()
+
+test_sex <- survfit(Surv(time, status==1) ~ sex, data = lung_mod)
+
+gplots[[1]] = ggsurvplot(test_sex, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Sex",
+           legend.lab = c("Female", "Male"))
+```
+
+### 6.2.2 ECOG performance score
+
+```{r}
+data_ecog = lung_mod %>%
+  mutate(ph.ecog = as.factor(ph.ecog))
+
+test_ecog <- survfit(Surv(time, status==1) ~ ph.ecog, data = data_ecog)
+
+gplots[[2]]= ggsurvplot(test_ecog, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "ECOG Performance Score",
+           legend.lab = c("0", "1", "2", "3"))
+```
+
+### 6.2.3 Karnofsky performance score as rated by physician
+
+```{r}
+data_phkarno = lung_mod %>%
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
+                              ph.karno <= 80 ~ "<= 80")) 
+
+test_phkarno <- survfit(Surv(time, status==1) ~ ph.karno, data = data_phkarno)
+
+gplots[[3]] = ggsurvplot(test_phkarno, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Karnofsky Score by Physician",
+           legend.lab = c("<= 80", "> 80"))
+```
+
+### 6.2.4 Karnofsky performance score as rated by patient
+
+```{r}
+data_patkarno = lung_mod %>%
+  mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
+                               pat.karno <= 80 ~ "<= 80")) 
+
+test_patkarno <- survfit(Surv(time, status==1) ~ pat.karno, data = data_patkarno)
+
+gplots[[4]] = ggsurvplot(test_patkarno, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Karnofsky Score by Patient",
+           legend.lab = c("<= 80", "> 80"))
+```
+
+### 6.2.5 Weight loss
+```{r}
+avg_meal_cal = mean(as.numeric(lung_df$meal.cal), na.rm = TRUE)
+
+data_meal = lung_mod %>%
+  mutate(meal.cal = case_when(meal.cal > avg_meal_cal ~ "> average",
+                              meal.cal <= avg_meal_cal ~ "<= average")) 
+
+test_meal_cal = survfit(Surv(time, status==1) ~ meal.cal, data = data_meal)
+
+gplots[[5]] = ggsurvplot(test_meal_cal, 
+           fun = "cloglog",
+           ggtheme = theme_bw(), 
+           legend = "bottom", 
+           legend.title = "Calories Consumed at Meals",
+           legend.lab = c("<= average", "> average"))
+```
+
+```{r}
+# combine the plots
+arrange_ggsurvplots(gplots, 
+                    print = TRUE,
+                    title = "Log of Negative Log of Estimated Survival Functions",
+                    ncol = 2, 
+                    nrow = 3)
+```
+
+
+### 6.3 Observed vs. Fitted
+
+### 6.4 Test interaction for proportionality
+```{r}
+cox_mod_4 = coxph(Surv(time, status == 1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss 
+                  + sex * log(time) + ph.ecog * log(time) + ph.karno * log(time) + pat.karno * log(time) 
+                  + wt.loss * log(time), 
+                  lung_mod)
+  
+summary(cox_mod_4)
+```
+
+
+
+### 6.5 Correction for violation of PH assumption
+
+### 6.5.1 Stratified PH model
+```{r}
+cox_mod_5 = coxph(Surv(time, status==1) ~ ph.ecog + ph.karno + pat.karno + wt.loss + strata(sex), lung_mod) 
+summary(cox_mod_5)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
