@@ -10,9 +10,9 @@ library(dplyr)
 library(survival)
 library(ggplot2)
 library(visR)
-library(hrbrthemes)
+#library(hrbrthemes)
 library(caret)
-library(patchwork)
+#library(patchwork)
 ```
 
 ## Make standalone table for report
@@ -136,7 +136,7 @@ df_ecog <- data.frame(
   )
 df_ecog = df_ecog %>%
   arrange(desc(group)) %>%
-  mutate(prop = value / sum(df_sex$value)*100) %>%
+  mutate(prop = value / sum(df_ecog$value)*100) %>%
   mutate(ypos = cumsum(prop)- 0.5*prop)
 pie_ecog = 
   ggplot(df_ecog, aes(x="", y=value, fill=group)) + 
