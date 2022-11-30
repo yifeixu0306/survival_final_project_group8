@@ -21,6 +21,10 @@ library(tidycmprsk)
 library(StepReg)
 library(Rcpp)
 library(MASS)
+library(flexsurv)
+library(polspline)
+library(rms)
+library(eha)
 ```
 
 ```{r, include=FALSE}
@@ -106,7 +110,105 @@ render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
 
 ### 2.2 Distribution plots for each variable
 
+```{r}
+# Univariate
 
+# Time
+lung_df %>%
+  ggplot(aes(x = time)) + 
+  geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
+  geom_density() 
+
+# Age
+lung_df %>%
+  mutate(Sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) %>%
+  ggplot(aes(x = age, fill=Sex, color = Sex)) + 
+  geom_histogram(position = "identity", alpha = 0.5) +
+  labs(x = "Age",
+       y = "Count")
+
+# Gender-pie chart
+lung_df_pie_1 = lung_df %>% 
+  group_by(sex) %>% 
+  count() %>% 
+  mutate(total_n = c(138 + 90)) %>% 
+  mutate(perc = `n` / `total_n`) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc, 0.01)) %>%
+  mutate(Sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) 
+
+ggplot(lung_df_pie_1, aes(x="", y=labels, fill=Sex)) + 
+  geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
+  geom_label(aes(label = labels),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE,
+             color = "white") +
+  coord_polar("y", start=0) +
+  scale_fill_brewer(palette="Set2") +
+  theme_void() +
+  guides(fill = guide_legend(title = "Sex")) 
+
+
+#ECOG-pie chart
+lung_df_pie_2 = lung_df %>% 
+  group_by(ph.ecog) %>% 
+  count() %>% 
+  mutate(total_n = c(63 + 113 + 50 + 1 + 1)) %>% 
+  mutate(perc = `n` / `total_n`) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc, 0.01)) %>%
+  as.data.frame() %>%
+  mutate(ph.ecog = as.character(ph.ecog))
+         
+lung_df_pie_2[is.na(lung_df_pie_2)] = "Missing"
+
+ggplot(lung_df_pie_2, aes(x="", y=labels, fill=ph.ecog)) + 
+  geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
+  geom_label(aes(label = labels),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE,
+             color = "white") +
+  coord_polar("y", start=0) +
+  scale_fill_brewer(palette="Set2") +
+  theme_void() +
+  guides(fill = guide_legend(title = "ECOG Score")) 
+
+# ph.karno & pat.karno
+df_karno = lung_df %>%
+  rename("Patient" = pat.karno,
+        "Physician" = ph.karno) %>%
+  pivot_longer(
+    Patient:Physician,
+    names_to = "Rate",
+    values_to = "Karnofsky"
+  )
+
+df_karno %>%
+  ggplot(aes(x=Karnofsky, fill = Rate, color = Rate)) + 
+  geom_histogram(binwidth = 10, alpha=0.5, position="identity") + 
+  labs(x = "Karnofsky Score",
+       y = "Count")
+
+
+# Weight loss
+lung_df %>% ggplot(aes(x = wt.loss)) + 
+  geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
+  geom_density() +
+    labs(x = "Weight Loss",
+       y = "Density")
+
+
+# Meal
+lung_df %>%
+  ggplot(aes(x = meal.cal)) + 
+  geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
+  geom_density() +
+  labs(x = "Calories Consumed",
+       y = "Density")
+
+```
 
 
 
@@ -428,7 +530,11 @@ arrange_ggsurvplots(splots,
 
 ```{r}
 lung_mod = lung_df %>%
-  drop_na()
+  drop_na() %>%
+  mutate(age_grp = case_when(age > 70 ~ "> 70",
+                         age <= 70 ~ "<= 70")) %>%
+  mutate(age_grp = as.factor(age_grp)) %>%
+  mutate(ph.ecogn = as.numeric(ph.ecog))
 
 # full model
 cox_mod_full = coxph(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss, data = lung_mod)
@@ -441,7 +547,7 @@ summary(cox_mod_full)
 
 ```{r}
 cox_mod_1 = coxph(Surv(time, status==1) ~ sex + ph.ecog, data = lung_mod)
-summary(cox_mod_full)
+summary(cox_mod_1)
 ```
 
 ### 5.2.2 Stepwise method 
@@ -455,20 +561,20 @@ stepwiseCox(formula,
             selection=c("bidirection"),
             select="AIC",
             method=c("breslow"),
-            sle=0.15,
+            sle=0.25,
             sls=0.15,
             weights=NULL,
             best=NULL)
 
 
-cox_mod_2 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss, data = lung_mod)
+cox_mod_2 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + wt.loss, data = lung_mod)
 summary(cox_mod_2)
 ```
 
 ### 5.2.3 Add interaction term
 
 ```{r}
-cox_mod_3 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss + ph.karno*ph.ecog, 
+cox_mod_3 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + wt.loss + ph.karno*ph.ecog, 
                   data = lung_mod)
 summary(cox_mod_3)
 ```
@@ -497,6 +603,8 @@ mod_comp = data.frame("AIC" = AIC,
 rownames(mod_comp) = c("Full model", "Model 1", "Model 2", "Model 3")
 
 mod_comp
+
+anova(cox_mod_full, cox_mod_1, cox_mod_2, cox_mod_3)
 ```
 
 
@@ -514,6 +622,7 @@ test.ph
 ```
 
 The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
+
 
 ```{r}
 ggcoxzph(test.ph)
@@ -533,7 +642,7 @@ gplots[[1]] = ggsurvplot(test_sex,
            ggtheme = theme_bw(), 
            legend = "bottom", 
            legend.title = "Sex",
-           legend.lab = c("Female", "Male"))
+           legend.lab = c("Male", "Female"))
 ```
 
 ### 6.2.2 ECOG performance score
@@ -620,10 +729,10 @@ arrange_ggsurvplots(gplots,
 ### 6.4 Test interaction for proportionality
 
 ```{r}
-cox_mod_4 = coxph(Surv(time, status == 1) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss 
-                  + sex * log(time) + ph.ecog * log(time) + ph.karno * log(time) + pat.karno * log(time) 
-                  + wt.loss * log(time), 
-                  lung_mod)
+cox_mod_4 = coxph(Surv(time, status == 1) ~ sex + ph.ecog + ph.karno + wt.loss +
+                  sex*log(time) + ph.ecog*log(time) + ph.karno*log(time)  + wt.loss*log(time) 
+                  - log(time), 
+                  lung_mod) 
   
 summary(cox_mod_4)
 ```
@@ -634,14 +743,12 @@ summary(cox_mod_4)
 
 ### 6.5.1 Stratified PH model
 ```{r}
-cox_mod_5 = coxph(Surv(time, status==1) ~ ph.ecog + ph.karno + pat.karno + wt.loss + strata(sex), lung_mod) 
+cox_mod_5 = coxph(Surv(time, status==1) ~ ph.ecog + ph.karno + wt.loss:strata(sex), lung_mod) 
 summary(cox_mod_5)
+
+AIC(cox_mod_5)
+BIC(cox_mod_5)
 ```
-
-
-
-
-
 
 
 
