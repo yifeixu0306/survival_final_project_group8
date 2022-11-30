@@ -107,8 +107,7 @@ p_meal =
   geom_density() 
 p_meal
 
-(p_time|p_wtloss|p_meal) / 
-  (p_age|hist_karno|hist_sex) 
+(p_time|p_wtloss|p_meal) / (p_age|hist_karno|hist_sex) 
 
 
 #Gender-pie chart
