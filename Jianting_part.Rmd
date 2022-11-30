@@ -131,7 +131,7 @@ pie_sex
 
 #ECOG-pie chart
 df_ecog <- data.frame(
-  group = c("0", "1", "2", "3", ""),
+  group = c("0", "1", "2", "3", "missing"),
   value = c(27.632, 49.561, 21.930, 0.439, 0.439)
   )
 df_ecog = df_ecog %>%
