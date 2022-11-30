@@ -118,7 +118,9 @@ p_time =
   lung_df %>%
   ggplot(aes(x = time)) + 
   geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
-  geom_density() 
+  geom_density() +
+  labs(x="Survival Time (Days)",
+       y = "Density")
 
 # Age
 p_age = 
@@ -168,7 +170,7 @@ lung_df_pie_2 = lung_df %>%
 lung_df_pie_2[is.na(lung_df_pie_2)] = "Missing"
 
 p_ecog = 
-  ggplot(lung_df_pie_2, aes(x="", y=labels, fill=ph.ecog)) + 
+  ggplot(lung_df_pie_2, aes(x="", y=perc, fill=ph.ecog)) + 
   geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
   geom_label(aes(label = labels),
              position = position_stack(vjust = 0.5),
