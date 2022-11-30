@@ -12,11 +12,10 @@ library(ggplot2)
 library(visR)
 library(hrbrthemes)
 library(caret)
+library(patchwork)
 ```
 
-
-
-** Make standalone table for report
+## Make standalone table for report
 ```{r setup, include=FALSE}
 # Metadata Title
 DATASET <- paste0("NCCTG Lung Cancer Dataset (from survival package ", 
@@ -40,7 +39,7 @@ lung_cohort <- survival::lung
 
 # Change gender to be a factor and rename some variables to make output look nicer
 lung_cohort <- lung_cohort %>%  
-  dplyr::mutate(sex = as.factor(ifelse(sex == 1, "Male", "Female")), ph.ecog = factor(ph.ecog))  %>%  
+  dplyr::mutate(sex = as.factor(ifelse(sex == 1, "Male", "Female")), ph.ecog = factor(ph.ecog), status = as.factor(status))  %>%  
   dplyr::rename(Age = "age", Sex = "sex", Status = "status", ECOG = "ph.ecog", KarnoPH = "ph.karno", KarnoPAT = "pat.karno", Meal = "meal.cal", Weightloss="wt.loss")
 
 # Restore original options()
@@ -84,25 +83,33 @@ summary(lung_cohort)
 p_time = 
   ggplot(lung_cohort, aes(x = time)) + 
   geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
-  geom_density() 
+  geom_density() +
+  xlab("survival time")
 p_time
-
-#Weightloss
-df_wtloss =
-  ggplot(lung_cohort, aes(x = Weightloss)) + 
-  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
-  geom_density() 
-
-#Meal
-df_meal =
-  ggplot(lung_cohort, aes(x = Meal)) + 
-  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
-  geom_density() 
 
 #Age-group
 p_age = 
   ggplot(lung_cohort, aes(x = Age, fill=Sex, color = Sex)) + 
   geom_histogram(position = "identity", alpha = 0.5)
+p_age
+
+#Weightloss
+p_wtloss =
+  ggplot(lung_cohort, aes(x = Weightloss)) + 
+  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
+  geom_density() 
+p_wtloss
+
+#Meal
+p_meal =
+  ggplot(lung_cohort, aes(x = Meal)) + 
+  geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue") +
+  geom_density() 
+p_meal
+
+(p_time|p_wtloss|p_meal) / 
+  (p_age|hist_karno|hist_sex) 
+
 
 #Gender-pie chart
 df_sex = data.frame(
@@ -124,7 +131,7 @@ pie_sex
 
 #ECOG-pie chart
 df_ecog <- data.frame(
-  group = c("0", "1", "2", "3", "missing"),
+  group = c("0", "1", "2", "3", ""),
   value = c(27.632, 49.561, 21.930, 0.439, 0.439)
   )
 df_ecog = df_ecog %>%
@@ -140,6 +147,17 @@ pie_ecog =
   geom_text(aes(y = ypos, label = group), color = "white", size=6)
 pie_ecog
 
+
+#ECOG-bar chart
+p_ecog = 
+  ggplot(lung_cohort, aes(x = ECOG)) +
+  geom_bar()
+p_ecog
+
+p2_ecog = 
+  ggplot(lung_cohort, aes(x = ECOG, fill= Status)) +
+  geom_bar()
+p2_ecog + p_ecog
 ```
 
 ```{r}
@@ -177,7 +195,18 @@ featurePlot(x = lung_cohort[,c(2, 4)],
             y = lung_cohort$Status,
             scales = list(x = list(relation = "free"), 
                           y = list(relation = "free")),
-            plot = "density", pch = "|", 
-            auto.key = list(columns = 3))
+            plot = "density", pch = "|",)
+```
+
+
+```{r}
+lung_cohort = 
+  lung_cohort %>%
+  drop_na()
+
+# Plot the correlation
+corr = data.frame(lapply(lapply(lung_cohort, as.factor), as.numeric))
+corrplot(cor(corr), type = "lower")
+
 ```
 
