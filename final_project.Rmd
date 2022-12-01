@@ -25,7 +25,11 @@ library(flexsurv)
 library(polspline)
 library(rms)
 library(eha)
+<<<<<<< HEAD
 library(finalfit)
+=======
+library(patchwork)
+>>>>>>> 72d89edb13c33ed669ed86d864eaae06252b43fd
 ```
 
 ```{r, include=FALSE}
@@ -115,13 +119,17 @@ render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
 # Univariate
 
 # Time
-lung_df %>%
+p_time = 
+  lung_df %>%
   ggplot(aes(x = time)) + 
   geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
-  geom_density() 
+  geom_density() +
+  labs(x="Survival Time (Days)",
+       y = "Density")
 
 # Age
-lung_df %>%
+p_age = 
+  lung_df %>%
   mutate(Sex = case_when(sex == 1 ~ "Male",
                          sex == 2 ~ "Female")) %>%
   ggplot(aes(x = age, fill=Sex, color = Sex)) + 
@@ -130,7 +138,8 @@ lung_df %>%
        y = "Count")
 
 # Gender-pie chart
-lung_df_pie_1 = lung_df %>% 
+lung_df_pie_1 = 
+  lung_df %>% 
   group_by(sex) %>% 
   count() %>% 
   mutate(total_n = c(138 + 90)) %>% 
@@ -140,7 +149,8 @@ lung_df_pie_1 = lung_df %>%
   mutate(Sex = case_when(sex == 1 ~ "Male",
                          sex == 2 ~ "Female")) 
 
-ggplot(lung_df_pie_1, aes(x="", y=labels, fill=Sex)) + 
+p_gender =
+  ggplot(lung_df_pie_1, aes(x="", y=perc, fill=Sex)) + 
   geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
   geom_label(aes(label = labels),
              position = position_stack(vjust = 0.5),
@@ -165,7 +175,8 @@ lung_df_pie_2 = lung_df %>%
          
 lung_df_pie_2[is.na(lung_df_pie_2)] = "Missing"
 
-ggplot(lung_df_pie_2, aes(x="", y=labels, fill=ph.ecog)) + 
+p_ecog = 
+  ggplot(lung_df_pie_2, aes(x="", y=perc, fill=ph.ecog)) + 
   geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
   geom_label(aes(label = labels),
              position = position_stack(vjust = 0.5),
@@ -176,39 +187,70 @@ ggplot(lung_df_pie_2, aes(x="", y=labels, fill=ph.ecog)) +
   theme_void() +
   guides(fill = guide_legend(title = "ECOG Score")) 
 
-# ph.karno & pat.karno
+#status-pie chart
+lung_df_pie_3 = lung_df %>%
+  group_by(status) %>% 
+  count() %>% 
+  mutate(total_n = c(63 + 165)) %>% 
+  mutate(perc = `n` / `total_n`) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc, 0.01)) %>%
+  as.data.frame() %>%
+  mutate(status = as.character(status))
+
+p_status = 
+  ggplot(lung_df_pie_3, aes(x="", y=perc, fill=status)) + 
+  geom_bar(width = 1, stat = "identity", color="white", alpha = 0.7) + 
+  geom_label(aes(label = labels),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE,
+             color = "white") +
+  coord_polar("y", start=0) +
+  scale_fill_brewer(palette="Set2") +
+  theme_void() +
+  guides(fill = guide_legend(title = "Status")) 
+
+p_gender + p_ecog + p_status
+
+# Sukarno.karno & pat.karno
 df_karno = lung_df %>%
   rename("Patient" = pat.karno,
         "Physician" = ph.karno) %>%
   pivot_longer(
     Patient:Physician,
-    names_to = "Rate",
+    names_to = "Rating",
     values_to = "Karnofsky"
   )
 
-df_karno %>%
-  ggplot(aes(x=Karnofsky, fill = Rate, color = Rate)) + 
+p_karno =
+  df_karno %>%
+  ggplot(aes(x=Karnofsky, fill = Rating, color = Rating)) + 
   geom_histogram(binwidth = 10, alpha=0.5, position="identity") + 
   labs(x = "Karnofsky Score",
        y = "Count")
 
 
 # Weight loss
-lung_df %>% ggplot(aes(x = wt.loss)) + 
+p_weight =
+  lung_df %>% ggplot(aes(x = wt.loss)) + 
   geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
   geom_density() +
-    labs(x = "Weight Loss",
+    labs(x = "Weight Loss (pounds)",
        y = "Density")
 
 
 # Meal
-lung_df %>%
+p_meal =
+  lung_df %>%
   ggplot(aes(x = meal.cal)) + 
   geom_histogram(aes(y=after_stat(density)), color="darkblue", fill="lightblue") +
   geom_density() +
   labs(x = "Calories Consumed",
        y = "Density")
 
+p_time + p_weight + p_meal
+
+p_age + p_karno
 ```
 
 
