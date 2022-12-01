@@ -613,28 +613,28 @@ diff_age_ecog
 
 ### 4.2.3 ph.karno + pat.karno
 
-```{r}
+```{r, fig.width=6}
 # fit
 lung_ph_pat = lung_df %>%
   drop_na(ph.karno, pat.karno) %>%
-  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
-                         ph.karno <= 80 ~ "<= 80")) %>%
-   mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
-                         ph.karno <= 80 ~ "<= 80")) 
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "  > 80",
+                         ph.karno <= 80 ~ "  <= 80")) %>%
+   mutate(pat.karno = case_when(pat.karno > 80 ~ "  > 80",
+                         ph.karno <= 80 ~ "  <= 80")) 
 
-fit_ph_pat = survfit(Surv(time, status==1) ~ ph.karno + pat.karno, data=lung_phkarno)
+fit_ph_pat = survfit(Surv(time, status==1) ~ ph.karno + pat.karno, data=lung_ph_pat)
 summary(fit_ph_pat)$table
 
 # visualization
-ggsurvplot(fit_phkarno,
-           pval = TRUE, conf.int = TRUE,
+ggsurvplot(fit_ph_pat,
+           pval = TRUE, conf.int = FALSE,
            surv.median.line = "hv", 
            ggtheme = theme_bw(), 
            legend = "bottom")
 
 # log-rank test
-diff_phkarno = survdiff(Surv(time, status==1) ~ ph.karno, data = lung_phkarno) 
-diff_phkarno
+diff_ph_pat = survdiff(Surv(time, status==1) ~ ph.karno + pat.karno, data = lung_ph_pat) 
+diff_ph_pat
 ```
 
 
@@ -976,11 +976,6 @@ web_final$scale
 ## ecog = 3 shortens survival time by 0.246 times than ecog = 0
 ```
 
-
-
-```{r}
-openxlsx::write.xlsx(lung, file = "/Users/effy/Desktop") 
-```
 
 
 

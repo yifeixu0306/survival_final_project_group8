@@ -10,9 +10,9 @@ library(dplyr)
 library(survival)
 library(ggplot2)
 library(visR)
-library(hrbrthemes)
+#library(hrbrthemes)
 library(caret)
-library(patchwork)
+#library(patchwork)
 ```
 
 ## Make standalone table for report
@@ -107,10 +107,6 @@ p_meal =
   geom_density() 
 p_meal
 
-(p_time|p_wtloss|p_meal) / 
-  (p_age|hist_karno|hist_sex) 
-
-
 #Gender-pie chart
 df_sex = data.frame(
   group = c("Male", "Female"),
@@ -131,12 +127,12 @@ pie_sex
 
 #ECOG-pie chart
 df_ecog <- data.frame(
-  group = c("0", "1", "2", "3", ""),
+  group = c("0", "1", "2", "3", "missing"),
   value = c(27.632, 49.561, 21.930, 0.439, 0.439)
   )
 df_ecog = df_ecog %>%
   arrange(desc(group)) %>%
-  mutate(prop = value / sum(df_sex$value)*100) %>%
+  mutate(prop = value / sum(df_ecog$value)*100) %>%
   mutate(ypos = cumsum(prop)- 0.5*prop)
 pie_ecog = 
   ggplot(df_ecog, aes(x="", y=value, fill=group)) + 
@@ -146,6 +142,9 @@ pie_ecog =
   scale_fill_brewer(palette="Set2") +
   geom_text(aes(y = ypos, label = group), color = "white", size=6)
 pie_ecog
+
+#Status-pie chart
+
 
 
 #ECOG-bar chart
