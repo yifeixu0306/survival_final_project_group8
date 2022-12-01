@@ -143,6 +143,9 @@ pie_ecog =
   geom_text(aes(y = ypos, label = group), color = "white", size=6)
 pie_ecog
 
+#Status-pie chart
+
+
 
 #ECOG-bar chart
 p_ecog = 
