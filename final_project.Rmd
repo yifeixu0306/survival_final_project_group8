@@ -25,6 +25,7 @@ library(flexsurv)
 library(polspline)
 library(rms)
 library(eha)
+library(finalfit)
 ```
 
 ```{r, include=FALSE}
@@ -224,6 +225,25 @@ corr = data.frame(lapply(lapply(lung_df_1, as.factor), as.numeric))
 corrplot(cor(corr), type = "lower")
 ```
 
+
+### 2.4 Hazard rate summary table
+
+```{r}
+explanatory = c("age", "sex", "ph.ecog", "ph.karno", "pat.karno", "meal.cal", "wt.loss")
+dependent = "Surv(time, status)"
+
+lung %>% 
+  mutate(sex=as.factor(sex)) %>%
+  hr_plot(dependent, 
+          explanatory, 
+          dependent_label = "Survival",
+          remove_ref = TRUE,
+          table_text_size=4, title_text_size=14,
+          plot_opts=list(xlab("HR, 95% CI"), 
+                         theme(axis.title = element_text(size=12))))
+```
+
+
 ## 3 Non-parametric Estimation
 
 ### 3.1 Life-table
@@ -314,11 +334,13 @@ survfit(Surv(time, status==1) ~ 1, lung_df, stype = 1, ctype = 2)
 ```
 Fleming-Harrington estimator for median survival is 310, which is equal to K-M estimator.
 
-## 4 Hypothesis testing
+## 4 Hypothesis testing (identify the prognostic factors)
 
 In this section, we will make comparison of the different groups of the attributes using the Kaplan-Meier Curve and conduct log-rank test.
 
-### 4.1 Sex
+### 4.1 Univariate
+
+### 4.1.1 Sex
 
 ```{r, message=FALSE}
 splots <- list()
@@ -346,7 +368,7 @@ diff_sex = survdiff(Surv(time, status==1) ~ Sex, data = lung_sex)
 diff_sex
 ```
 
-### 4.2 Age
+### 4.1.2 Age
 
 ```{r}
 # fit
@@ -372,7 +394,7 @@ diff_age = survdiff(Surv(time, status==1) ~ Age, data = lung_age)
 diff_age
 ```
 
-### 4.3 ECOG performance score
+### 4.1.3 ECOG performance score
 
 ```{r}
 # fit
@@ -380,7 +402,7 @@ lung_ecog = lung_df %>%
   filter(!is.na(ph.ecog)) %>%
   mutate(ph.ecog = as.factor(ph.ecog))
 
-fit_ecog = survfit(Surv(time, status==1) ~ ph.ecog, data = lung_ecog)
+fit_ecog = survfit(Surv(log(time), status==1) ~ ph.ecog, data = lung_ecog)
 summary(fit_ecog)$table
 
 # visualization
@@ -397,7 +419,7 @@ diff_ecog = survdiff(Surv(time, status==1) ~ ph.ecog, data = lung_ecog)
 diff_ecog
 ```
 
-### 4.4 Karnofsky performance score rated by physician
+### 4.1.4 Karnofsky performance score rated by physician
 
 ```{r}
 # fit
@@ -423,7 +445,7 @@ diff_phkarno = survdiff(Surv(time, status==1) ~ ph.karno, data = lung_phkarno)
 diff_phkarno
 ```
 
-### 4.5 Karnofsky performance score as rated by patient
+### 4.1.5 Karnofsky performance score as rated by patient
 
 ```{r}
 # fit
@@ -449,7 +471,7 @@ diff_patkarno = survdiff(Surv(time, status==1) ~ pat.karno, data = lung_patkarno
 diff_patkarno
 ```
 
-### 4.6 Calories consumed at meals
+### 4.1.6 Calories consumed at meals
 
 ```{r}
 # fit
@@ -478,7 +500,7 @@ diff_meal_cal
 
 ```
 
-### 4.7 Weight loss
+### 4.1.7 Weight loss
 
 ```{r}
 # fit
@@ -514,7 +536,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
+```{r, fig.height=20}
 # combine the plots
 arrange_ggsurvplots(splots, 
                     print = TRUE,
@@ -523,6 +545,98 @@ arrange_ggsurvplots(splots,
                     nrow = 4)
 
 ```
+
+Age, sex, ph.ecog, ph.karno, pat.karno can be identified as prognostic factors.
+
+### 4.2 Multivariate
+
+## 4.2.1 sex + ph.ecog
+
+```{r, fig.width=6}
+# fit
+lung_sex_ecog = lung_df %>%
+ drop_na(sex, ph.ecog) %>%
+  mutate(ph.ecog = as.factor(ph.ecog)) %>%
+  mutate(Sex = case_when(sex == 1 ~ "Male",
+                         sex == 2 ~ "Female")) 
+
+fit_sex_ecog = survfit(Surv(time, status==1) ~ Sex + ph.ecog, data = lung_sex_ecog)
+summary(fit_sex_ecog)$table
+
+# subset
+fit_sex_ecog_1 = survfit(Surv(time, status==1) ~ Sex + ph.ecog, data = subset(lung_sex_ecog, ph.ecog %in% c(0,1)))
+summary(fit_sex_ecog_1)$table
+
+# visualization
+ggsurvplot(fit_sex_ecog,
+           pval = TRUE, conf.int = FALSE,
+           surv.median.line = "hv", 
+           ggtheme = theme_bw(), 
+           legend = "bottom")
+
+ggsurvplot(fit_sex_ecog_1,
+           pval = TRUE, conf.int = FALSE,
+           surv.median.line = "hv", 
+           ggtheme = theme_bw(), 
+           legend = "bottom")
+
+# log-rank test
+diff_sex_ecog = survdiff(Surv(time, status==1) ~ Sex + ph.ecog, data = lung_sex_ecog) 
+diff_sex_ecog
+```
+We find that female with ecog = 1 has a higher probability than male with ecog = 0.
+
+## 4.2.2 age + ph.ecog
+
+```{r, fig.height=6}
+# fit
+lung_age_ecog = lung_df %>%
+  drop_na(age, ph.ecog) %>%
+  mutate(Age = case_when(age > 70 ~ "> 70",
+                         age <= 70 ~ "<= 70")) 
+
+fit_age_ecog = survfit(Surv(time, status==1) ~ Age + ph.ecog, data = lung_age_ecog)
+summary(fit_age_ecog)$table
+
+# visualization
+ggsurvplot(fit_age_ecog,
+           pval = TRUE, conf.int = FALSE,
+           surv.median.line = "hv", 
+           ggtheme = theme_bw(), 
+           legend = "bottom")
+
+# log-rank test
+diff_age_ecog = survdiff(Surv(time, status==1) ~ Age + ph.ecog, data = lung_age_ecog) 
+diff_age_ecog
+```
+
+
+### 4.2.3 ph.karno + pat.karno
+
+```{r}
+# fit
+lung_ph_pat = lung_df %>%
+  drop_na(ph.karno, pat.karno) %>%
+  mutate(ph.karno = case_when(ph.karno > 80 ~ "> 80",
+                         ph.karno <= 80 ~ "<= 80")) %>%
+   mutate(pat.karno = case_when(pat.karno > 80 ~ "> 80",
+                         ph.karno <= 80 ~ "<= 80")) 
+
+fit_ph_pat = survfit(Surv(time, status==1) ~ ph.karno + pat.karno, data=lung_phkarno)
+summary(fit_ph_pat)$table
+
+# visualization
+ggsurvplot(fit_phkarno,
+           pval = TRUE, conf.int = TRUE,
+           surv.median.line = "hv", 
+           ggtheme = theme_bw(), 
+           legend = "bottom")
+
+# log-rank test
+diff_phkarno = survdiff(Surv(time, status==1) ~ ph.karno, data = lung_phkarno) 
+diff_phkarno
+```
+
 
 ## 5 Model Fitting (Cox Model)
 
@@ -553,7 +667,7 @@ summary(cox_mod_1)
 ### 5.2.2 Stepwise method 
 
 ```{r, message=FALSE}
-formula = Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss
+formula = Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss 
 
 stepwiseCox(formula, 
             lung_mod,
@@ -565,7 +679,6 @@ stepwiseCox(formula,
             sls=0.15,
             weights=NULL,
             best=NULL)
-
 
 cox_mod_2 = coxph(Surv(time, status==1) ~ sex + ph.ecog + ph.karno + wt.loss, data = lung_mod)
 summary(cox_mod_2)
@@ -651,7 +764,7 @@ gplots[[1]] = ggsurvplot(test_sex,
 data_ecog = lung_mod %>%
   mutate(ph.ecog = as.factor(ph.ecog))
 
-test_ecog <- survfit(Surv(time, status==1) ~ ph.ecog, data = data_ecog)
+test_ecog <- survfit(Surv(time, status==1), status==1 ~ ph.ecog, data = data_ecog)
 
 gplots[[2]]= ggsurvplot(test_ecog, 
            fun = "cloglog",
@@ -751,10 +864,123 @@ BIC(cox_mod_5)
 ```
 
 
+### 6.5.2 Time-varying covariates
+
+```{r}
+# explore ph.karno
+fit2 = coxph(Surv(time, status==1) ~ ph.karno, data = lung_mod)
+zph = cox.zph(fit2)
+
+plot(zph[1],lwd=2) 
+abline(0,0, col=1,lty=3,lwd=2)
+abline(h= fit2$coef[1], col=3, lwd=2, lty=2) 
+legend("bottomright",
+       legend=c("Reference line for null effect", "Average hazard over time", "Time-varying hazard"),
+       lty=c(3,2,1), 
+       col=c(1,3,1), lwd=2)
+
+lung_split = survSplit(Surv(time, status) ~ ., data= lung, cut=c(180, 350), episode= "tgroup", id="id")
+
+fit_split = coxph(Surv(tstart, time, status) ~ sex + ph.ecog + ph.karno:strata(tgroup) + wt.loss, data=lung_split)
+
+summary(fit_split)
+
+cox.zph(fit_split)
+
+
+# The result shows now that there is no correlation between transformed survival time and the scaled Schoenfeld residuals, indicating that the proportional hazards assumption is not violated with the stratified analysis, and judging by the global p-value, the model is fit.
+```
+
+## 7 Parametric Model
+
+### 7.1 Model Fitting
+```{r}
+# exponential
+fit_exp = survreg(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss,
+                  data = lung_mod, dist = "exp")
+summary(fit_exp)
+
+# weibull
+fit_weibull = survreg(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss,
+                      data = lung_mod, dist = "weibull")
+summary(fit_weibull)
+
+# log-logistics
+fit_llogis = survreg(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss,
+                     data = lung_mod, dist = "loglogistic")
+summary(fit_llogis)
+
+# log-normal
+fit_lnorm = survreg(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss,
+                    data = lung_mod, dist = "lognormal")
+summary(fit_lnorm)
+
+```
+
+### 7.2 Model Comparison
+```{r}
+AIC(fit_exp, fit_weibull, fit_llogis, fit_lnorm)
+BIC(fit_exp, fit_weibull, fit_llogis, fit_lnorm)
+
+
+fit_sex = survfit(Surv(time, status == 1) ~ sex, data = lung_mod)
+
+# -log(S(t))
+ggsurvplot(fit_sex, 
+           fun = "cumhaz",
+           title = "Negative Log of Estimated Survival Functions",
+           legend.lab = c("Male", "Female"),
+           ggtheme = theme_bw())
+
+# log(-log(S(t)))
+ggsurvplot(fit_sex, 
+           fun = "cloglog",
+           title = "Log of Negative Log of Estimated Survival Functions",
+           legend.lab = c("Male", "Female"),
+           ggtheme = theme_bw())
+
+# Weibull is better
+
+```
+
+### 7.2 Model Selection
+
+```{r}
+# full weibull model
+web = psm(Surv(time, status==1) ~ sex + age + ph.ecog + ph.karno + pat.karno + meal.cal + wt.loss, data = lung)
+
+# backward selection
+fastbw(web, rule="aic")
+
+# compare with cox model
+web_1 = phreg(Surv(time, status==1) ~ sex + ph.ecog,
+                      data = lung_mod, dist = "weibull")
+cox_1 = coxreg(Surv(time, status==1) ~ sex + ph.ecog, data = lung_mod)
+
+check.dist(web_1, cox_1)
+
+# final model
+web_final = survreg(Surv(time, status==1) ~ sex + ph.ecog,
+                      data = lung_mod, dist = "weibull")
+# Scale parameter
+web_final$scale
+
+# Shape parameter
+(shapeParameter <- 1 / web_final$scale)
+
+## AFT interpretation
+## Geometric mean of survival time: 480
+## female extends survival time by 1.439 times then male
+## ecog = 1 shortens survival time by 0.811 times than ecog = 0
+## ecog = 2 shortens survival time by 0.513 times than ecog = 0
+## ecog = 3 shortens survival time by 0.246 times than ecog = 0
+```
 
 
 
-
+```{r}
+openxlsx::write.xlsx(lung, file = "/Users/effy/Desktop") 
+```
 
 
 
