@@ -781,8 +781,13 @@ test.ph
 The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
 
 
-```{r, fig.width=4, fig.height=3}
-ggcoxzph(test.ph)
+```{r, fig.width=3, fig.height=4}
+# residual plots for continuous covariates
+ggcoxzph(test.ph, 
+         var = c("ph.karno", "wt.loss"), 
+         font.main = 12,
+         point.col = "#F8766D"
+         )
 ```
 
 ### 6.2 Graphical Approach - log-log curves
@@ -792,31 +797,33 @@ ggcoxzph(test.ph)
 ```{r}
 gplots <- list()
 
-test_sex <- survfit(Surv(time, status==1) ~ sex, data = lung_mod)
+test_sex <- survfit(Surv(time, status == 1) ~ sex, data = lung_mod)
 
 gplots[[1]] = ggsurvplot(test_sex, 
            fun = "cloglog",
-           xlim = c(5, 1200),
            ggtheme = theme_bw(), 
+           xlim = c(5, 1200),
            legend = "bottom", 
            legend.title = "Sex",
-           legend.lab = c("Male", "Female"))
+           legend.lab = c("Male", "Female"),
+           xlab = "log(Time)",
+           ylab = "log[-log(Survival Probability)]")
 ```
 
 ### 6.2.2 ECOG performance score
 
 ```{r}
-data_ecog = lung_mod 
+test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog, data = lung_mod)
 
-test_ecog <- survfit(Surv(time, status==1) ~ ph.ecog.n, data = data_ecog)
-
-gplots[[2]]= ggsurvplot(test_ecog, 
+gplots[[2]] = ggsurvplot(test_ecog, 
            fun = "cloglog",
+           ggtheme = theme_bw(),
            xlim = c(5, 1200),
-           ggtheme = theme_bw(), 
            legend = "bottom", 
            legend.title = "ECOG Performance Score",
-           legend.lab = c("0", "1", "2"))
+           legend.lab = c("0", "1", "2", "3"),
+           xlab = "log(Time)",
+           ylab = "log[-log(Survival Probability)]")
 ```
 
 ```{r}
@@ -835,7 +842,7 @@ cox_mod_5 = coxph(Surv(time, status == 1) ~ sex + ph.ecog.n + ph.karno + wt.loss
                   sex*log(time) + ph.ecog.n*log(time) + ph.karno*log(time)  + wt.loss*log(time) 
                   - log(time), 
                   lung_mod) 
-  
+summary(cox_mod_5)
 ```
 
 ### 6.4 Correction for violation of PH assumption
