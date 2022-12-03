@@ -30,14 +30,25 @@ cancer_df = lung
 Firstly, construct the proportional hazards model we got in previous step:
 
 ```{r}
-# drop missing values
-cancer_mod = cancer_df %>%
- # mutate(status1 = ifelse(status==2,1,0)) %>% #???
+lung_df = cancer_df %>%
+  mutate(status = case_when(status == 1 ~ 0,
+                            status == 2 ~ 1)) %>%
+  mutate(sex = as.factor(sex),
+         ph.ecog = as.factor(ph.ecog), 
+         status = as.factor(status))
+
+lung_df_e = lung_df %>%
+  mutate(ph.ecog.n = case_when(ph.ecog == 0 ~ 0,
+                               ph.ecog == 1 ~ 1,
+                               ph.ecog == 2 ~ 2,
+                               ph.ecog == 3 ~ 2)) %>%
+  mutate(ph.ecog.n = as.factor(ph.ecog.n))
+
+lung_mod = lung_df_e %>%
   drop_na()
 
 # model by stepwise
-cox_mod_1 = coxph(Surv(time, status) ~ sex + ph.ecog + ph.karno + pat.karno + wt.loss, data = cancer_mod)
-summary(cox_mod_1)
+cox_mod_3 = coxph(Surv(time, status==1) ~ sex + ph.ecog.n + ph.karno + wt.loss, data = lung_mod)
 ```
 
 # Diagnosis 
@@ -48,42 +59,61 @@ The Cox proportional hazards model makes two assumptions: \
 
 ## Schoenfeld Residuals
 ```{r}
-test.ph = cox.zph(cox_mod_1)
+test.ph = cox.zph(cox_mod_3)
 test.ph
 ```
 
 The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
 
 ```{r}
-ggcoxzph(test.ph)
+# residual plots for continuous covariates
+ggcoxzph(test.ph, 
+         var = c("ph.karno", "wt.loss"), 
+         font.main = 12,
+         point.col = "#F8766D"
+         )
 ```
 
 ## Graphical Approach - log-log curves
 ### sex
 ```{r}
-test_sex <- survfit(Surv(time, status) ~ sex, data = cancer_mod)
+gplots <- list()
 
-ggsurvplot(test_sex, 
+test_sex <- survfit(Surv(time, status == 1) ~ sex, data = lung_mod)
+
+gplots[[1]] = ggsurvplot(test_sex, 
            fun = "cloglog",
            ggtheme = theme_bw(), 
+           xlim = c(5, 1200),
            legend = "bottom", 
-           legend.title = "Log-log Curve for Sex",
-           legend.lab = c("Male", "Female"))
+           legend.title = "Sex",
+           legend.lab = c("Male", "Female"),
+           xlab = "log(Time)",
+           ylab = "log[-log(Survival Probability)]")
 ```
 
 ### ph.ecog
 ```{r}
-data_ecog = cancer_mod %>%
-  mutate(ph.ecog = as.factor(ph.ecog))
+test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog, data = lung_mod)
 
-test_ecog <- survfit(Surv(time, status) ~ ph.ecog, data = data_ecog)
-
-ggsurvplot(test_ecog, 
+gplots[[2]] = ggsurvplot(test_ecog, 
            fun = "cloglog",
-           ggtheme = theme_bw(), 
+           ggtheme = theme_bw(),
+           xlim = c(5, 1200),
            legend = "bottom", 
-           legend.title = "Log-log Curve for ECOG Performance Score",
-           legend.lab = c("0", "1", "2", "3"))
+           legend.title = "ECOG Performance Score",
+           legend.lab = c("0", "1", "2", "3"),
+           xlab = "log(Time)",
+           ylab = "log[-log(Survival Probability)]")
+```
+
+```{r}
+# combine the log-log plots for categorical covariates
+arrange_ggsurvplots(gplots, 
+                    print = TRUE,
+                    title = "Log of Negative Log of Estimated Survival Functions",
+                    ncol = 2, 
+                    nrow = 1)
 ```
 
 ### ph.karno
@@ -134,5 +164,17 @@ ggsurvplot(test_meal_cal,
            legend = "bottom", 
            legend.title = "Calories Consumed at Meals",
            legend.lab = c("<= average", "> average"))
+```
+
+## Interaction for proportionality
+
+Generate the time dependent covariates by creating interactions of the predictors and a function of survival time and include in the model.  If any of the time dependent covariates are significant then those predictors are not proportional.
+
+```{r}
+cox_mod_int = coxph(Surv(time, status == 2) ~ sex + ph.ecog.n + ph.karno + wt.loss +
+                  sex*log(time) + ph.ecog.n*log(time) + ph.karno*log(time)  + wt.loss*log(time), 
+                  cancer_df)
+
+summary(cox_mod_int)
 ```
 
