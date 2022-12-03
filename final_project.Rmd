@@ -813,7 +813,7 @@ gplots[[1]] = ggsurvplot(test_sex,
 ### 6.2.2 ECOG performance score
 
 ```{r}
-test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog, data = lung_mod)
+test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog.n, data = lung_mod)
 
 gplots[[2]] = ggsurvplot(test_ecog, 
            fun = "cloglog",
@@ -821,7 +821,7 @@ gplots[[2]] = ggsurvplot(test_ecog,
            xlim = c(5, 1200),
            legend = "bottom", 
            legend.title = "ECOG Performance Score",
-           legend.lab = c("0", "1", "2", "3"),
+           legend.lab = c("0", "1", "2"),
            xlab = "log(Time)",
            ylab = "log[-log(Survival Probability)]")
 ```
@@ -833,6 +833,26 @@ arrange_ggsurvplots(gplots,
                     title = "Log of Negative Log of Estimated Survival Functions",
                     ncol = 2, 
                     nrow = 1)
+```
+
+## Graphical methods -- observed vs fitted
+### ecog
+```{r}
+test_ph_ecog <- coxph(Surv(time, status == 1) ~ ph.ecog.n, lung_mod)
+
+plot(test_ecog, col = c("#661100","#117733", "#332288"),
+     xlab = "Time (days)", ylab = "Survival Function",
+     main = "Observed vs. Fitted")
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(0))), # male
+      col = "#CC6677", conf.int = FALSE)
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(1))), # female
+      col = "#999933", conf.int = FALSE)
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(2))), # female
+      col = "#6699CC", conf.int = FALSE)
+legend("topright", legend = c("Observed ph.ecog = 0", "Fitted ph.ecog = 0",
+                              "Observed ph.ecog = 1", "Fitted ph.ecog = 1",
+                              "Observed ph.ecog = 2", "Fitted ph.ecog = 2"), 
+       col = c("#661100", "#CC6677", "#117733", "#999933", "#332288", "#6699CC"), lty = 1, cex = 0.65)
 ```
 
 ### 6.3 Test interaction for proportionality

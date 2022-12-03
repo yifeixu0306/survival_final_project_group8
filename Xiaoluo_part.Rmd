@@ -65,10 +65,16 @@ test.ph
 
 The proportional hazard assumption is supported by a non-significant relationship between residuals and time, and refuted by a significant relationship. Here, with a significance level of 0.05, the test is statistically significant for `ph.karno`. The global test is not statistically significant, so our proportional hazards assumption is reasonable. 
 
-```{r}
+```{r, fig.width=4, fig.height=3}
 # residual plots for continuous covariates
 ggcoxzph(test.ph, 
-         var = c("ph.karno", "wt.loss"), 
+         var = "ph.karno", 
+         font.main = 12,
+         point.col = "#F8766D"
+         )
+
+ggcoxzph(test.ph, 
+         var = "wt.loss", 
          font.main = 12,
          point.col = "#F8766D"
          )
@@ -94,7 +100,7 @@ gplots[[1]] = ggsurvplot(test_sex,
 
 ### ph.ecog
 ```{r}
-test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog, data = lung_mod)
+test_ecog <- survfit(Surv(time, status == 1) ~ ph.ecog.n, data = lung_mod)
 
 gplots[[2]] = ggsurvplot(test_ecog, 
            fun = "cloglog",
@@ -102,7 +108,7 @@ gplots[[2]] = ggsurvplot(test_ecog,
            xlim = c(5, 1200),
            legend = "bottom", 
            legend.title = "ECOG Performance Score",
-           legend.lab = c("0", "1", "2", "3"),
+           legend.lab = c("0", "1", "2"),
            xlab = "log(Time)",
            ylab = "log[-log(Survival Probability)]")
 ```
@@ -164,6 +170,26 @@ ggsurvplot(test_meal_cal,
            legend = "bottom", 
            legend.title = "Calories Consumed at Meals",
            legend.lab = c("<= average", "> average"))
+```
+
+## Graphical methods -- observed vs fitted
+### ecog
+```{r}
+test_ph_ecog <- coxph(Surv(time, status == 1) ~ ph.ecog.n, lung_mod)
+
+plot(test_ecog, col = c("#661100","#117733", "#332288"),
+     xlab = "Time (days)", ylab = "Survival Function",
+     main = "Observed vs. Fitted")
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(0))), # male
+      col = "#CC6677", conf.int = FALSE)
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(1))), # female
+      col = "#999933", conf.int = FALSE)
+lines(survfit(test_ph_ecog, newdata = data.frame(ph.ecog.n = as.factor(2))), # female
+      col = "#6699CC", conf.int = FALSE)
+legend("topright", legend = c("Observed ph.ecog = 0", "Fitted ph.ecog = 0",
+                              "Observed ph.ecog = 1", "Fitted ph.ecog = 1",
+                              "Observed ph.ecog = 2", "Fitted ph.ecog = 2"), 
+       col = c("#661100", "#CC6677", "#117733", "#999933", "#332288", "#6699CC"), lty = 1, cex = 0.65)
 ```
 
 ## Interaction for proportionality
