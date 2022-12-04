@@ -4,10 +4,6 @@
 %
 \documentclass[
 ]{article}
-\title{P8108 Final Project}
-\author{}
-\date{\vspace{-2.5em}2022-11-28}
-
 \usepackage{amsmath,amssymb}
 \usepackage{lmodern}
 \usepackage{iftex}
@@ -37,13 +33,6 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
-\hypersetup{
-  pdftitle={P8108 Final Project},
-  hidelinks,
-  pdfcreator={LaTeX via pandoc}}
-\urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
 \usepackage{color}
 \usepackage{fancyvrb}
@@ -119,6 +108,17 @@
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={P8108 Final Project},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{P8108 Final Project}
+\author{}
+\date{\vspace{-2.5em}2022-11-28}
 
 \begin{document}
 \maketitle
@@ -526,17 +526,78 @@ Estimation}\label{non-parametric-estimation}}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{longtable}[]{@{}lrrrrrrrrrrrr@{}}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.1064}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0638}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0638}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0638}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0638}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0851}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.0745}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 24\tabcolsep) * \real{0.1064}}@{}}
 \caption{Life-table Estimate}\tabularnewline
-\toprule
-& tstart & tstop & nsubs & nlost & nrisk & nevent & surv & pdf & hazard
-& se.surv & se.pdf & se.hazard \\
-\midrule
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+tstart
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+tstop
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nsubs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nlost
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nrisk
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nevent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+surv
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pdf
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+hazard
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.surv
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.pdf
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.hazard
+\end{minipage} \\
+\midrule()
 \endfirsthead
-\toprule
-& tstart & tstop & nsubs & nlost & nrisk & nevent & surv & pdf & hazard
-& se.surv & se.pdf & se.hazard \\
-\midrule
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+tstart
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+tstop
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nsubs
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nlost
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nrisk
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nevent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+surv
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pdf
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+hazard
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.surv
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.pdf
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+se.hazard
+\end{minipage} \\
+\midrule()
 \endhead
 0-100 & 0 & 100 & 228 & 1 & 227.5 & 31 & 1.0000 & 0.0014 & 0.0015 &
 0.0000 & 2e-04 & 0.0003 \\
@@ -564,7 +625,7 @@ Estimation}\label{non-parametric-estimation}}
 & NaN & NaN \\
 1200-Inf & 1200 & Inf & 0 & 0 & 0.0 & 0 & NaN & NA & NA & NaN & NA &
 NA \\
-\bottomrule
+\bottomrule()
 \end{longtable}
 
 \hypertarget{kaplan-meier-method}{%
@@ -1869,7 +1930,12 @@ reasonable.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{ggcoxzph}\NormalTok{(test.ph)}
+\CommentTok{\# residual plots for continuous covariates}
+\FunctionTok{ggcoxzph}\NormalTok{(test.ph, }
+         \AttributeTok{var =} \FunctionTok{c}\NormalTok{(}\StringTok{"ph.karno"}\NormalTok{, }\StringTok{"wt.loss"}\NormalTok{), }
+         \AttributeTok{font.main =} \DecValTok{12}\NormalTok{,}
+         \AttributeTok{point.col =} \StringTok{"\#F8766D"}
+\NormalTok{         )}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1886,15 +1952,17 @@ curves}\label{graphical-approach---log-log-curves}}
 \begin{Highlighting}[]
 \NormalTok{gplots }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{()}
 
-\NormalTok{test\_sex }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(time, status}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ sex, }\AttributeTok{data =}\NormalTok{ lung\_mod)}
+\NormalTok{test\_sex }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(time, status }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ sex, }\AttributeTok{data =}\NormalTok{ lung\_mod)}
 
 \NormalTok{gplots[[}\DecValTok{1}\NormalTok{]] }\OtherTok{=} \FunctionTok{ggsurvplot}\NormalTok{(test\_sex, }
            \AttributeTok{fun =} \StringTok{"cloglog"}\NormalTok{,}
-           \AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{1200}\NormalTok{),}
            \AttributeTok{ggtheme =} \FunctionTok{theme\_bw}\NormalTok{(), }
+           \AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{1200}\NormalTok{),}
            \AttributeTok{legend =} \StringTok{"bottom"}\NormalTok{, }
            \AttributeTok{legend.title =} \StringTok{"Sex"}\NormalTok{,}
-           \AttributeTok{legend.lab =} \FunctionTok{c}\NormalTok{(}\StringTok{"Male"}\NormalTok{, }\StringTok{"Female"}\NormalTok{))}
+           \AttributeTok{legend.lab =} \FunctionTok{c}\NormalTok{(}\StringTok{"Male"}\NormalTok{, }\StringTok{"Female"}\NormalTok{),}
+           \AttributeTok{xlab =} \StringTok{"log(Time)"}\NormalTok{,}
+           \AttributeTok{ylab =} \StringTok{"log[{-}log(Survival Probability)]"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1904,17 +1972,17 @@ score}\label{ecog-performance-score-1}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{data\_ecog }\OtherTok{=}\NormalTok{ lung\_mod }
+\NormalTok{test\_ecog }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(time, status }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ph.ecog.n, }\AttributeTok{data =}\NormalTok{ lung\_mod)}
 
-\NormalTok{test\_ecog }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(time, status}\SpecialCharTok{==}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ph.ecog.n, }\AttributeTok{data =}\NormalTok{ data\_ecog)}
-
-\NormalTok{gplots[[}\DecValTok{2}\NormalTok{]]}\OtherTok{=} \FunctionTok{ggsurvplot}\NormalTok{(test\_ecog, }
+\NormalTok{gplots[[}\DecValTok{2}\NormalTok{]] }\OtherTok{=} \FunctionTok{ggsurvplot}\NormalTok{(test\_ecog, }
            \AttributeTok{fun =} \StringTok{"cloglog"}\NormalTok{,}
+           \AttributeTok{ggtheme =} \FunctionTok{theme\_bw}\NormalTok{(),}
            \AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{1200}\NormalTok{),}
-           \AttributeTok{ggtheme =} \FunctionTok{theme\_bw}\NormalTok{(), }
            \AttributeTok{legend =} \StringTok{"bottom"}\NormalTok{, }
            \AttributeTok{legend.title =} \StringTok{"ECOG Performance Score"}\NormalTok{,}
-           \AttributeTok{legend.lab =} \FunctionTok{c}\NormalTok{(}\StringTok{"0"}\NormalTok{, }\StringTok{"1"}\NormalTok{, }\StringTok{"2"}\NormalTok{))}
+           \AttributeTok{legend.lab =} \FunctionTok{c}\NormalTok{(}\StringTok{"0"}\NormalTok{, }\StringTok{"1"}\NormalTok{, }\StringTok{"2"}\NormalTok{),}
+           \AttributeTok{xlab =} \StringTok{"log(Time)"}\NormalTok{,}
+           \AttributeTok{ylab =} \StringTok{"log[{-}log(Survival Probability)]"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1931,6 +1999,35 @@ score}\label{ecog-performance-score-1}}
 
 \includegraphics{final_project_files/figure-latex/unnamed-chunk-35-1.pdf}
 
+\hypertarget{graphical-methods-observed-vs-fitted}{%
+\subsection{Graphical methods -- observed vs
+fitted}\label{graphical-methods-observed-vs-fitted}}
+
+\hypertarget{ecog}{%
+\subsubsection{ecog}\label{ecog}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{test\_ph\_ecog }\OtherTok{\textless{}{-}} \FunctionTok{coxph}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(time, status }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ph.ecog.n, lung\_mod)}
+
+\FunctionTok{plot}\NormalTok{(test\_ecog, }\AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"\#661100"}\NormalTok{,}\StringTok{"\#117733"}\NormalTok{, }\StringTok{"\#332288"}\NormalTok{),}
+     \AttributeTok{xlab =} \StringTok{"Time (days)"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Survival Function"}\NormalTok{,}
+     \AttributeTok{main =} \StringTok{"Observed vs. Fitted"}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(}\FunctionTok{survfit}\NormalTok{(test\_ph\_ecog, }\AttributeTok{newdata =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{ph.ecog.n =} \FunctionTok{as.factor}\NormalTok{(}\DecValTok{0}\NormalTok{))), }\CommentTok{\# male}
+      \AttributeTok{col =} \StringTok{"\#CC6677"}\NormalTok{, }\AttributeTok{conf.int =} \ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(}\FunctionTok{survfit}\NormalTok{(test\_ph\_ecog, }\AttributeTok{newdata =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{ph.ecog.n =} \FunctionTok{as.factor}\NormalTok{(}\DecValTok{1}\NormalTok{))), }\CommentTok{\# female}
+      \AttributeTok{col =} \StringTok{"\#999933"}\NormalTok{, }\AttributeTok{conf.int =} \ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{lines}\NormalTok{(}\FunctionTok{survfit}\NormalTok{(test\_ph\_ecog, }\AttributeTok{newdata =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{ph.ecog.n =} \FunctionTok{as.factor}\NormalTok{(}\DecValTok{2}\NormalTok{))), }\CommentTok{\# female}
+      \AttributeTok{col =} \StringTok{"\#6699CC"}\NormalTok{, }\AttributeTok{conf.int =} \ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"topright"}\NormalTok{, }\AttributeTok{legend =} \FunctionTok{c}\NormalTok{(}\StringTok{"Observed ph.ecog = 0"}\NormalTok{, }\StringTok{"Fitted ph.ecog = 0"}\NormalTok{,}
+                              \StringTok{"Observed ph.ecog = 1"}\NormalTok{, }\StringTok{"Fitted ph.ecog = 1"}\NormalTok{,}
+                              \StringTok{"Observed ph.ecog = 2"}\NormalTok{, }\StringTok{"Fitted ph.ecog = 2"}\NormalTok{), }
+       \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"\#661100"}\NormalTok{, }\StringTok{"\#CC6677"}\NormalTok{, }\StringTok{"\#117733"}\NormalTok{, }\StringTok{"\#999933"}\NormalTok{, }\StringTok{"\#332288"}\NormalTok{, }\StringTok{"\#6699CC"}\NormalTok{), }\AttributeTok{lty =} \DecValTok{1}\NormalTok{, }\AttributeTok{cex =} \FloatTok{0.65}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{final_project_files/figure-latex/unnamed-chunk-36-1.pdf}
+
 \hypertarget{test-interaction-for-proportionality}{%
 \subsubsection{6.3 Test interaction for
 proportionality}\label{test-interaction-for-proportionality}}
@@ -1941,8 +2038,51 @@ proportionality}\label{test-interaction-for-proportionality}}
 \NormalTok{                  sex}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(time) }\SpecialCharTok{+}\NormalTok{ ph.ecog.n}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(time) }\SpecialCharTok{+}\NormalTok{ ph.karno}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(time)  }\SpecialCharTok{+}\NormalTok{ wt.loss}\SpecialCharTok{*}\FunctionTok{log}\NormalTok{(time) }
                   \SpecialCharTok{{-}} \FunctionTok{log}\NormalTok{(time), }
 \NormalTok{                  lung\_mod) }
+\FunctionTok{summary}\NormalTok{(cox\_mod\_5)}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{verbatim}
+## Call:
+## coxph(formula = Surv(time, status == 1) ~ sex + ph.ecog.n + ph.karno + 
+##     wt.loss + sex * log(time) + ph.ecog.n * log(time) + ph.karno * 
+##     log(time) + wt.loss * log(time) - log(time), data = lung_mod)
+## 
+##   n= 167, number of events= 120 
+## 
+##                            coef  exp(coef)   se(coef)         z Pr(>|z|)    
+## sex2                 -1.413e+00  2.435e-01  3.567e-01    -3.961 7.47e-05 ***
+## ph.ecog.n1           -5.475e-01  5.784e-01  3.381e-01    -1.619   0.1054    
+## ph.ecog.n2            9.108e-02  1.095e+00  3.580e-01     0.254   0.7992    
+## ph.karno             -5.613e-03  9.944e-01  1.375e-02    -0.408   0.6831    
+## wt.loss               7.732e-02  1.080e+00  1.201e-02     6.439 1.20e-10 ***
+## sex1:log(time)       -1.734e+02  5.128e-76  6.256e-02 -2771.127  < 2e-16 ***
+## sex2:log(time)       -1.731e+02  6.582e-76  6.255e-02 -2767.407  < 2e-16 ***
+## ph.ecog.n1:log(time)  1.003e-01  1.105e+00  6.090e-02     1.646   0.0997 .  
+## ph.ecog.n2:log(time) -6.616e-02  9.360e-01  6.606e-02    -1.002   0.3166    
+## ph.karno:log(time)   -3.481e-03  9.965e-01  2.413e-03    -1.442   0.1492    
+## wt.loss:log(time)    -1.402e-02  9.861e-01  2.130e-03    -6.581 4.68e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+##                      exp(coef) exp(-coef) lower .95 upper .95
+## sex2                 2.435e-01  4.107e+00 1.210e-01 4.899e-01
+## ph.ecog.n1           5.784e-01  1.729e+00 2.982e-01 1.122e+00
+## ph.ecog.n2           1.095e+00  9.129e-01 5.430e-01 2.209e+00
+## ph.karno             9.944e-01  1.006e+00 9.680e-01 1.022e+00
+## wt.loss              1.080e+00  9.256e-01 1.055e+00 1.106e+00
+## sex1:log(time)       5.128e-76  1.950e+75 4.537e-76 5.797e-76
+## sex2:log(time)       6.582e-76  1.519e+75 5.822e-76 7.440e-76
+## ph.ecog.n1:log(time) 1.105e+00  9.046e-01 9.811e-01 1.246e+00
+## ph.ecog.n2:log(time) 9.360e-01  1.068e+00 8.223e-01 1.065e+00
+## ph.karno:log(time)   9.965e-01  1.003e+00 9.918e-01 1.001e+00
+## wt.loss:log(time)    9.861e-01  1.014e+00 9.820e-01 9.902e-01
+## 
+## Concordance= 1  (se = 0 )
+## Likelihood ratio test= 948.8  on 11 df,   p=<2e-16
+## Wald test            = 15337797  on 11 df,   p=<2e-16
+## Score (logrank) test = 418.3  on 11 df,   p=<2e-16
+\end{verbatim}
 
 \hypertarget{correction-for-violation-of-ph-assumption}{%
 \subsubsection{6.4 Correction for violation of PH
@@ -2052,7 +2192,7 @@ covariates}\label{time-varying-covariates}}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{final_project_files/figure-latex/unnamed-chunk-38-1.pdf}
+\includegraphics{final_project_files/figure-latex/unnamed-chunk-39-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2070,7 +2210,7 @@ covariates}\label{time-varying-covariates}}
 ##     ph.karno:strata(tgroup) + wt.loss, data = lung_split)
 ## 
 ##   n= 440, number of events= 151 
-##    (21 observations deleted due to missingness)
+##    (因为不存在，21个观察量被删除了)
 ## 
 ##                                      coef exp(coef)  se(coef)      z Pr(>|z|)
 ## sex                             -0.632406  0.531312  0.176582 -3.581 0.000342
@@ -2343,7 +2483,7 @@ Surv(time, status) \textasciitilde{} (sex + wt.loss): strata(ph.ecog.n)
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{final_project_files/figure-latex/unnamed-chunk-40-1.pdf}
+\includegraphics{final_project_files/figure-latex/unnamed-chunk-41-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2357,7 +2497,7 @@ Surv(time, status) \textasciitilde{} (sex + wt.loss): strata(ph.ecog.n)
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{final_project_files/figure-latex/unnamed-chunk-40-2.pdf}
+\includegraphics{final_project_files/figure-latex/unnamed-chunk-41-2.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2411,7 +2551,7 @@ Surv(time, status) \textasciitilde{} (sex + wt.loss): strata(ph.ecog.n)
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{final_project_files/figure-latex/unnamed-chunk-41-1.pdf}
+\includegraphics{final_project_files/figure-latex/unnamed-chunk-42-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]

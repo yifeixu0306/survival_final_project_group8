@@ -64,8 +64,7 @@ cuminc(Surv(time, dead) ~ 1, data = dead_df) %>%
   labs(
     x = "Days"
   ) + 
-  add_confidence_interval() +
-  add_risktable()
+  add_confidence_interval() 
 ```
 As the number of survival days increase, the probability of a person dying decreases.
 

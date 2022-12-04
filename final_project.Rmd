@@ -325,8 +325,7 @@ cuminc(Surv(time, status) ~ 1, data = lung_df) %>%
   labs(
     x = "Time (Days)"
   ) + 
-  add_confidence_interval() +
-  add_risktable()
+  add_confidence_interval() 
 ```
 As the number of survival days increase, the probability of a person dying decreases.
 
