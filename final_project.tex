@@ -101,10 +101,6 @@
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
-\usepackage{amsmath}
-\usepackage{booktabs}
-\usepackage{caption}
-\usepackage{longtable}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
@@ -218,76 +214,9 @@ Preprocess}\label{import-dataset-and-data-preprocess}}
 \NormalTok{tab1 }\OtherTok{\textless{}{-}} \FunctionTok{get\_tableone}\NormalTok{(lung\_tab)}
 
 \CommentTok{\# Render the tableone}
-\FunctionTok{render}\NormalTok{(tab1, }\AttributeTok{title =} \StringTok{"Overview over Lung Cancer patients"}\NormalTok{, }\AttributeTok{datasource =}\NormalTok{ DATASET)}
+\NormalTok{table1 }\OtherTok{=} \FunctionTok{render}\NormalTok{(tab1, }\AttributeTok{title =} \StringTok{"Overview over Lung Cancer patients"}\NormalTok{, }\AttributeTok{datasource =}\NormalTok{ DATASET)}
 \end{Highlighting}
 \end{Shaded}
-
-\setlength{\LTpost}{0mm}
-\begin{longtable}{l|r}
-\caption*{
-{\large Overview over Lung Cancer patients}
-} \\ 
-\toprule
-\multicolumn{1}{l}{} & Total (N=228) \\ 
-\midrule
-\multicolumn{2}{l}{Age} \\ 
-\midrule
-Mean (SD) & 62.4 (9.07) \\ 
-Median (IQR) & 63 (56-69) \\ 
-Min-max & 39-82 \\ 
-Missing & 0 (0\%) \\ 
-\midrule
-\multicolumn{2}{l}{Sex} \\ 
-\midrule
-Female & 90 (39.5\%) \\ 
-Male & 138 (60.5\%) \\ 
-\midrule
-\multicolumn{2}{l}{Censoring Status} \\ 
-\midrule
-Censored & 63 (27.6\%) \\ 
-Dead & 165 (72.4\%) \\ 
-\midrule
-\multicolumn{2}{l}{ECOG Performance Score} \\ 
-\midrule
-0 & 63 (27.632\%) \\ 
-1 & 113 (49.561\%) \\ 
-2 & 50 (21.930\%) \\ 
-3 & 1 (0.439\%) \\ 
-Missing & 1 (0.439\%) \\ 
-\midrule
-\multicolumn{2}{l}{Karnofsky Performance Score Rated by Physician} \\ 
-\midrule
-Mean (SD) & 81.9 (12.3) \\ 
-Median (IQR) & 80 (75-90) \\ 
-Min-max & 50-100 \\ 
-Missing & 1 (0.439\%) \\ 
-\midrule
-\multicolumn{2}{l}{Karnofsky Performance Score Rated by Patient} \\ 
-\midrule
-Mean (SD) & 80 (14.6) \\ 
-Median (IQR) & 80 (70-90) \\ 
-Min-max & 30-100 \\ 
-Missing & 3 (1.32\%) \\ 
-\midrule
-\multicolumn{2}{l}{Calories Consumed at Meals} \\ 
-\midrule
-Mean (SD) & 929 (402) \\ 
-Median (IQR) & 975 (635-1150) \\ 
-Min-max & 96-2600 \\ 
-Missing & 47 (20.6\%) \\ 
-\midrule
-\multicolumn{2}{l}{Weight Loss in Last Six Months} \\ 
-\midrule
-Mean (SD) & 9.83 (13.1) \\ 
-Median (IQR) & 7 (0-15.8) \\ 
-Min-max & -24-68 \\ 
-Missing & 14 (6.14\%) \\ 
-\bottomrule
-\end{longtable}
-\begin{minipage}{\linewidth}
-Data Source: NCCTG Lung Cancer Dataset (from survival package 3.4.0)\\
-\\
-\end{minipage}
 
 \hypertarget{distribution-plots-for-each-variable}{%
 \subsubsection{2.2 Distribution plots for each
@@ -825,8 +754,7 @@ The median survival time is 310 days.
   \FunctionTok{labs}\NormalTok{(}
     \AttributeTok{x =} \StringTok{"Time (Days)"}
 \NormalTok{  ) }\SpecialCharTok{+} 
-  \FunctionTok{add\_confidence\_interval}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{add\_risktable}\NormalTok{()}
+  \FunctionTok{add\_confidence\_interval}\NormalTok{() }
 \end{Highlighting}
 \end{Shaded}
 
@@ -2210,7 +2138,7 @@ covariates}\label{time-varying-covariates}}
 ##     ph.karno:strata(tgroup) + wt.loss, data = lung_split)
 ## 
 ##   n= 440, number of events= 151 
-##    (因为不存在，21个观察量被删除了)
+##    (21 observations deleted due to missingness)
 ## 
 ##                                      coef exp(coef)  se(coef)      z Pr(>|z|)
 ## sex                             -0.632406  0.531312  0.176582 -3.581 0.000342
