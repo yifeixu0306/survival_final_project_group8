@@ -107,7 +107,7 @@ lung_tab <- lung_df %>%
 tab1 <- get_tableone(lung_tab)
 
 # Render the tableone
-render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
+table1 = render(tab1, title = "Overview over Lung Cancer patients", datasource = DATASET)
 
 ```
 
